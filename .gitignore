@@ -1,0 +1,4 @@
+/vendor
+/tests
+/manifest.json
+/.phpunit.result.cache
