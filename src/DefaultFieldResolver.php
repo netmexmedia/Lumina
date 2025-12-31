@@ -8,7 +8,6 @@ class DefaultFieldResolver
 {
     public function __invoke($source, array $args, $context, ResolveInfo $info) {
         $field = $info->fieldName;
-        dd($source, $args, $context, $info);
 
         if (is_array($source)) {
             return $source[$field] ?? null;
