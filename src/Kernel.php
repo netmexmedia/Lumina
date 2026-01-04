@@ -2,48 +2,37 @@
 
 namespace Netmex\Lumina;
 
+use GraphQL\Executor\ExecutionResult;
 use GraphQL\GraphQL;
-use Netmex\Lumina\Query\QueryIntentBuilder;
+use Netmex\Lumina\Http\Request\GraphQLRequest;
 use Netmex\Lumina\Schema\SchemaBuilder;
 
-/**
- * @property $executor
- */
-readonly class Kernel implements ExecutorInterface
+readonly class Kernel
 {
     private SchemaBuilderInterface $schemaBuilder;
-    private QueryIntentBuilder $intentBuilder;
-    private QueryExecutorInterface $queryExecutor;
     private ContextBuilderInterface $contextBuilder;
-    private DefaultFieldResolver $defaultFieldResolver;
 
-    public function __construct(SchemaBuilder $schemaBuilder, QueryIntentBuilder $intentBuilder, QueryExecutorInterface $executor, ContextBuilderInterface $contextBuilder, DefaultFieldResolver $defaultFieldResolver) {
+    public function __construct(SchemaBuilder $schemaBuilder, ContextBuilderInterface $contextBuilder) {
         $this->schemaBuilder = $schemaBuilder;
-        $this->intentBuilder = $intentBuilder;
-        $this->queryExecutor = $executor;
         $this->contextBuilder = $contextBuilder;
-        $this->defaultFieldResolver = $defaultFieldResolver;
     }
 
-    public function execute(string $query, array $variables = [], ?string $operation = null): array
+    public function execute(GraphQLRequest $request): ExecutionResult
     {
-        // TODO : Propper error handling
-        return GraphQL::executeQuery(
-            $this->schemaBuilder->build(),
-            $query,
-            null,
-            $this->contextBuilder->build(),
-            $variables,
-            $operation,
-            function ($root, $args, $context, $info) {
-                $intent = $this->intentBuilder->build(
-                    $info->parentType->name,
-                    $info->fieldName,
-                    $args
-                );
+        $schema = $this->schemaBuilder->schema();
+        $context = $this->contextBuilder->build();
 
-                $this->queryExecutor->execute($intent);
-            }
-        )->toArray();
+        $result = GraphQL::executeQuery(
+            schema: $schema,
+            source: $request->query,
+            rootValue: null,
+            contextValue: $context,
+            variableValues: $request->variables,
+            operationName: $request->operationName,
+            fieldResolver: null,
+            validationRules: null
+        );
+
+        return $result;
     }
 }

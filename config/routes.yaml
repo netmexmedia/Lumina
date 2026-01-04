@@ -1,4 +1,4 @@
 lumina_graphql:
   path: '%lumina.endpoint%'
-  controller: Netmex\Lumina\Controller\GraphQLController
+  controller: Netmex\Lumina\Http\GraphQLController
   methods: [POST]

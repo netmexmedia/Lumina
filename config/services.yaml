@@ -5,13 +5,31 @@ services:
 
   Netmex\Lumina\:
     resource: '../src/*'
-    exclude:
-      - '../src/LuminaBundle.php'
-      - '../src/Controller'
 
-  Netmex\Lumina\Controller\:
-    resource: '../src/Controller'
-    tags: ['controller.service_arguments']
+  Netmex\Lumina\Schema\RegistrySchemaSDLLoader:
+    tags: ['lumina.schema_sdl_loader']
+
+  Netmex\Lumina\Schema\DirectiveSchemaSDLLoader:
+    tags: ['lumina.schema_sdl_loader']
+
+  Netmex\Lumina\Schema\CompositeSchemaSDLLoader:
+    arguments:
+      $loaders: !tagged_iterator lumina.schema_sdl_loader
+
+  Netmex\Lumina\Schema\SchemaSDLLoaderInterface:
+    alias: Netmex\Lumina\Schema\CompositeSchemaSDLLoader
+
+  # FIELD directives
+  Netmex\Lumina\Schema\Directives\AllDirective:
+    tags:
+      - { name: lumina.directive.field }
+      - { name: lumina.schema_sdl }
+
+  # Executors
+  Netmex\Lumina\Schema\Directives\WhereDirective:
+    tags:
+      - { name: lumina.directive.argument }
+      - { name: lumina.schema_sdl }
 
   Netmex\Lumina\Schema\FileSchemaSource:
     arguments:
@@ -21,20 +39,8 @@ services:
   Netmex\Lumina\Schema\SchemaSourceRegistry:
     arguments:
       $sources: !tagged_iterator lumina.schema_source
-#
-#  Netmex\Lumina\Execution\WebonyxGraphQLExecutor:
-#    arguments:
-#      $container: !tagged_locator
-#        tag: 'lumina.graphql_resolver'
-#
-#  Netmex\Lumina\Schema\FileSchemaProvider:
-#    arguments:
-#      $path: '%lumina.schema.directory%'
-#
-#  Netmex\Lumina\Directive\Definition\:
-#    resource: '../src/Directive/Definition/*'
-#    tags: ['lumina.graphql.directive']
-#
-#  Netmex\Lumina\Directive\DirectiveRegistry:
-#    arguments:
-#      $directives: !tagged_iterator lumina.graphql.directive
+
+  # Directives
+  Netmex\Lumina\Schema\Execution\AllExecutor:
+    arguments: ['@serializer']
+    tags: ['lumina.executor']

@@ -2,35 +2,36 @@
 
 namespace Netmex\Lumina\Schema;
 
-use GraphQL\Error\Error;
-use GraphQL\Error\SyntaxError;
-use GraphQL\Language\Parser;
 use GraphQL\Type\Schema;
 use GraphQL\Utils\BuildSchema;
-use Netmex\Lumina\Directive\DirectiveMetadataBuilder;
-use Netmex\Lumina\Directive\DirectiveMetadataRegistry;
 use Netmex\Lumina\SchemaBuilderInterface;
 
 final readonly class SchemaBuilder implements SchemaBuilderInterface
 {
+    protected Schema $schema;
+
     public function __construct(
-        private SchemaSourceRegistry $registry,
-        private DirectiveMetadataBuilder $directiveBuilder,
-        private DirectiveMetadataRegistry $directiveRegistry
+        private SchemaSDLLoaderInterface $sdlLoader,
+        private SchemaDocumentLoaderInterface $documentLoader,
+        private IntentBuilder $intentBuilder,
+        private ResolverAttacher $resolverAttacher,
     ) {}
+
+    public function schema(): Schema
+    {
+        return $this->schema ??= $this->build();
+    }
 
     public function build(): Schema
     {
-        $sdl = '';
+        $sdl = $this->sdlLoader->load();
 
-        foreach ($this->registry->all() as $source) {
-            $sdl .= "\n" . $source->load();
-        }
+        $schema   = BuildSchema::build($sdl);
+        $document = $this->documentLoader->load();
 
-        $ast = Parser::parse($sdl);
-        $this->directiveBuilder->build($ast, $this->directiveRegistry);
+        $intents = $this->intentBuilder->build($document);
+        $this->resolverAttacher->attach($schema, $intents);
 
-        // TODO: implment propper error handling
-        return BuildSchema::build($sdl);
+        return $schema;
     }
 }
