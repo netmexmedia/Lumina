@@ -1,6 +1,6 @@
 <?php
 
-namespace Netmex\Lumina\Schema;
+namespace Netmex\Lumina\Directives;
 
 interface SchemaDirective
 {

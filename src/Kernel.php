@@ -5,7 +5,7 @@ namespace Netmex\Lumina;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\GraphQL;
 use Netmex\Lumina\Http\Request\GraphQLRequest;
-use Netmex\Lumina\Schema\SchemaBuilder;
+use Netmex\Lumina\Schema\Builder\SchemaBuilder;
 
 readonly class Kernel
 {

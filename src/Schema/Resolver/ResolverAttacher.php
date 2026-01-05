@@ -1,6 +1,6 @@
 <?php
 
-namespace Netmex\Lumina\Schema;
+namespace Netmex\Lumina\Schema\Resolver;
 
 use GraphQL\Type\Schema;
 use Netmex\Lumina\Execution\ExecutorRegistry;

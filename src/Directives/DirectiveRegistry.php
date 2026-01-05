@@ -2,7 +2,6 @@
 
 namespace Netmex\Lumina\Directives;
 
-use Netmex\Lumina\Schema\FieldDirective;
 use Netmex\Lumina\SchemaSDLContributorInterface;
 
 final class DirectiveRegistry

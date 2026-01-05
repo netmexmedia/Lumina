@@ -6,8 +6,8 @@ use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\NamedTypeNode;
 use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use GraphQL\Language\AST\TypeNode;
+use Netmex\Lumina\Directives\FieldDirective;
 use Netmex\Lumina\Intent\QueryIntent;
-use Netmex\Lumina\Schema\FieldDirective;
 use Netmex\Lumina\SchemaSDLContributorInterface;
 
 final class AllDirective implements FieldDirective, SchemaSDLContributorInterface

@@ -1,10 +1,11 @@
 <?php
 
-namespace Netmex\Lumina\Schema;
+namespace Netmex\Lumina\Schema\Builder;
 
 use GraphQL\Type\Schema;
 use GraphQL\Utils\BuildSchema;
 use Netmex\Lumina\Intent\IntentBuilder;
+use Netmex\Lumina\Schema\Resolver\ResolverAttacher;
 use Netmex\Lumina\Schema\Source\SchemaDocumentLoaderInterface;
 use Netmex\Lumina\Schema\Source\SchemaSDLLoaderInterface;
 use Netmex\Lumina\SchemaBuilderInterface;
