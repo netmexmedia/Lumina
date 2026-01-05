@@ -3,11 +3,11 @@
 namespace Netmex\Lumina\Execution;
 
 use Netmex\Lumina\Context\Context;
-use Netmex\Lumina\Intent\QueryIntent;
+use Netmex\Lumina\Intent\Intent;
 
 interface QueryExecutorInterface
 {
     public function strategy(): string;
 
-    public function execute(QueryIntent $intent, array $args, Context $context): mixed;
+    public function execute(Intent $intent, array $args, Context $context): mixed;
 }

@@ -2,13 +2,13 @@
 
 namespace Netmex\Lumina\Intent\Factory;
 
-use Netmex\Lumina\Intent\QueryIntent;
+use Netmex\Lumina\Intent\Intent;
 
 final class IntentFactory
 {
-    public function create(string $type, string $field): QueryIntent
+    public function create(string $type, string $field): Intent
     {
-        return new QueryIntent(
+        return new Intent(
             type: $type,
             field: $field
         );

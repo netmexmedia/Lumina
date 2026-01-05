@@ -4,15 +4,15 @@ namespace Netmex\Lumina\Intent;
 
 final class IntentRegistry
 {
-    /** @var array<string, QueryIntent> */
+    /** @var array<string, Intent> */
     private array $intents = [];
 
-    public function add(QueryIntent $intent): void
+    public function add(Intent $intent): void
     {
         $this->intents[$intent->type . '.' . $intent->field] = $intent;
     }
 
-    public function get(string $type, string $field): ?QueryIntent
+    public function get(string $type, string $field): ?Intent
     {
         return $this->intents["$type.$field"] ?? null;
     }

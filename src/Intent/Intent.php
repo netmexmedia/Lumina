@@ -2,7 +2,7 @@
 
 namespace Netmex\Lumina\Intent;
 
-class QueryIntent
+class Intent
 {
     public const STRATEGY_ALL = 'all';
 

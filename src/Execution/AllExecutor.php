@@ -3,7 +3,7 @@
 namespace Netmex\Lumina\Execution;
 
 use Netmex\Lumina\Context\Context;
-use Netmex\Lumina\Intent\QueryIntent;
+use Netmex\Lumina\Intent\Intent;
 use Symfony\Component\Serializer\SerializerInterface;
 
 final readonly class AllExecutor implements QueryExecutorInterface
@@ -14,10 +14,10 @@ final readonly class AllExecutor implements QueryExecutorInterface
 
     public function strategy(): string
     {
-        return QueryIntent::STRATEGY_ALL;
+        return Intent::STRATEGY_ALL;
     }
 
-    public function execute(QueryIntent $intent, array $args, Context $context): array
+    public function execute(Intent $intent, array $args, Context $context): array
     {
         $repository = $context->entityManager->getRepository($intent->model);
 
