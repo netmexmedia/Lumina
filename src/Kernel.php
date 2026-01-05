@@ -11,17 +11,17 @@ use Netmex\Lumina\Schema\SchemaBuilderInterface;
 
 readonly class Kernel
 {
-    private SchemaBuilderInterface $schemaBuilder;
+    private SchemaCompiler $compiler;
     private ContextBuilderInterface $contextBuilder;
 
-    public function __construct(SchemaCompiler $schemaBuilder, ContextBuilderInterface $contextBuilder) {
-        $this->schemaBuilder = $schemaBuilder;
+    public function __construct(SchemaCompiler $compiler, ContextBuilderInterface $contextBuilder) {
+        $this->compiler = $compiler;
         $this->contextBuilder = $contextBuilder;
     }
 
     public function execute(GraphQLRequest $request): ExecutionResult
     {
-        $schema = $this->schemaBuilder->schema();
+        $schema = $this->compiler->schema();
         $context = $this->contextBuilder->build();
 
         $result = GraphQL::executeQuery(
