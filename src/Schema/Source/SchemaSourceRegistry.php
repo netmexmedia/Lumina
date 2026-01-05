@@ -2,8 +2,6 @@
 
 namespace Netmex\Lumina\Schema\Source;
 
-use Netmex\Lumina\SchemaSource;
-
 final class SchemaSourceRegistry
 {
     /** @var SchemaSource[] */

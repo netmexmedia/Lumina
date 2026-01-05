@@ -8,7 +8,7 @@ use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use GraphQL\Language\AST\TypeNode;
 use Netmex\Lumina\Directives\FieldDirective;
 use Netmex\Lumina\Intent\QueryIntent;
-use Netmex\Lumina\SchemaSDLContributorInterface;
+use Netmex\Lumina\Schema\SchemaSDLContributorInterface;
 
 final class AllDirective implements FieldDirective, SchemaSDLContributorInterface
 {

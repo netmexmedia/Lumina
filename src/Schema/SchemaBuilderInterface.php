@@ -1,6 +1,6 @@
 <?php
 
-namespace Netmex\Lumina;
+namespace Netmex\Lumina\Schema;
 
 use GraphQL\Type\Schema;
 

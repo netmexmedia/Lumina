@@ -3,7 +3,6 @@
 namespace Netmex\Lumina\Context;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Netmex\Lumina\ContextBuilderInterface;
 
 readonly class ContextBuilder implements ContextBuilderInterface
 {

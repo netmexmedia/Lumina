@@ -2,7 +2,7 @@
 
 namespace Netmex\Lumina\Directives;
 
-use Netmex\Lumina\SchemaSDLContributorInterface;
+use Netmex\Lumina\Schema\SchemaSDLContributorInterface;
 
 final class DirectiveRegistry
 {

@@ -8,7 +8,7 @@ use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use Netmex\Lumina\Directives\ArgumentDirective;
 use Netmex\Lumina\Intent\EqualsFilter;
 use Netmex\Lumina\Intent\QueryIntent;
-use Netmex\Lumina\SchemaSDLContributorInterface;
+use Netmex\Lumina\Schema\SchemaSDLContributorInterface;
 
 final class WhereDirective implements ArgumentDirective, SchemaSDLContributorInterface
 {

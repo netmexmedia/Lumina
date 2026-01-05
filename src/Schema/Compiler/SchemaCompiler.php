@@ -1,24 +1,23 @@
 <?php
 
-namespace Netmex\Lumina\Schema\Builder;
+namespace Netmex\Lumina\Schema\Compiler;
 
 use GraphQL\Type\Schema;
 use GraphQL\Utils\BuildSchema;
-use Netmex\Lumina\Intent\IntentBuilder;
-use Netmex\Lumina\Schema\Resolver\ResolverAttacher;
+use Netmex\Lumina\Schema\Runtime\ResolverAttacher;
+use Netmex\Lumina\Schema\SchemaBuilderInterface;
 use Netmex\Lumina\Schema\Source\SchemaDocumentLoaderInterface;
 use Netmex\Lumina\Schema\Source\SchemaSDLLoaderInterface;
-use Netmex\Lumina\SchemaBuilderInterface;
 
-final readonly class SchemaBuilder implements SchemaBuilderInterface
+final readonly class SchemaCompiler implements SchemaBuilderInterface
 {
     protected Schema $schema;
 
     public function __construct(
-        private SchemaSDLLoaderInterface $sdlLoader,
+        private SchemaSDLLoaderInterface      $sdlLoader,
         private SchemaDocumentLoaderInterface $documentLoader,
-        private IntentBuilder $intentBuilder,
-        private ResolverAttacher $resolverAttacher,
+        private IntentCompiler                $intentBuilder,
+        private ResolverAttacher              $resolverAttacher,
     ) {}
 
     public function schema(): Schema

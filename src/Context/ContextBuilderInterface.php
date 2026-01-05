@@ -1,8 +1,6 @@
 <?php
 
-namespace Netmex\Lumina;
-
-use Netmex\Lumina\Context\Context;
+namespace Netmex\Lumina\Context;
 
 interface ContextBuilderInterface
 {

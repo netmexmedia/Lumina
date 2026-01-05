@@ -2,8 +2,6 @@
 
 namespace Netmex\Lumina\Schema\Source;
 
-use Netmex\Lumina\SchemaSource;
-
 final readonly class FileSchemaSource implements SchemaSource
 {
     public function __construct(

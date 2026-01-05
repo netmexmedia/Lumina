@@ -4,15 +4,17 @@ namespace Netmex\Lumina;
 
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\GraphQL;
+use Netmex\Lumina\Context\ContextBuilderInterface;
 use Netmex\Lumina\Http\Request\GraphQLRequest;
-use Netmex\Lumina\Schema\Builder\SchemaBuilder;
+use Netmex\Lumina\Schema\Compiler\SchemaCompiler;
+use Netmex\Lumina\Schema\SchemaBuilderInterface;
 
 readonly class Kernel
 {
     private SchemaBuilderInterface $schemaBuilder;
     private ContextBuilderInterface $contextBuilder;
 
-    public function __construct(SchemaBuilder $schemaBuilder, ContextBuilderInterface $contextBuilder) {
+    public function __construct(SchemaCompiler $schemaBuilder, ContextBuilderInterface $contextBuilder) {
         $this->schemaBuilder = $schemaBuilder;
         $this->contextBuilder = $contextBuilder;
     }

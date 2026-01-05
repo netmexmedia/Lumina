@@ -1,12 +1,14 @@
 <?php
 
-namespace Netmex\Lumina\Intent;
+namespace Netmex\Lumina\Schema\Compiler;
 
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\TypeDefinitionNode;
 use Netmex\Lumina\Directives\DirectiveRegistry;
+use Netmex\Lumina\Intent\IntentRegistry;
+use Netmex\Lumina\Intent\QueryIntent;
 
-final readonly class IntentBuilder
+final readonly class IntentCompiler
 {
     public function __construct(
         private DirectiveRegistry $directives
