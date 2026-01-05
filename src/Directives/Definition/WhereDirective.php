@@ -6,6 +6,7 @@ use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\InputValueDefinitionNode;
 use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use Netmex\Lumina\Directives\ArgumentDirective;
+use Netmex\Lumina\Directives\DirectiveContext;
 use Netmex\Lumina\Intent\Builder\IntentBuilderInterface;
 use Netmex\Lumina\Intent\EqualsFilter;
 use Netmex\Lumina\Intent\Intent;
@@ -36,12 +37,12 @@ final class WhereDirective implements ArgumentDirective, SchemaSDLContributorInt
 
     // TODO hardcoded resolver registration, needs to be dynamic
     // Should also be registered
-    public function intent(IntentBuilderInterface $builder, InputValueDefinitionNode $argument): void
+    public function intent(IntentBuilderInterface $builder, DirectiveContext $context): void
     {
         $builder->addFilter(
             new EqualsFilter(
-                argument: $argument->name->value,
-                column: $argument->name->value
+                argument: $context->getName(),
+                column: $context->getName()
             )
         );
     }

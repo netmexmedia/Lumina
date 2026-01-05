@@ -6,6 +6,7 @@ use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\NamedTypeNode;
 use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use GraphQL\Language\AST\TypeNode;
+use Netmex\Lumina\Directives\DirectiveContext;
 use Netmex\Lumina\Directives\FieldDirective;
 use Netmex\Lumina\Execution\AllExecutor;
 use Netmex\Lumina\Execution\QueryExecutorInterface;
@@ -47,19 +48,25 @@ final class AllDirective implements FieldDirective, SchemaSDLContributorInterfac
         GRAPHQL;
     }
 
-    public function applyToField(Intent $intent, FieldDefinitionNode $field, ObjectTypeDefinitionNode $parentType): void
+    public function intent(IntentBuilderInterface $builder, DirectiveContext $context): void
     {
-        $intent->strategy = Intent::STRATEGY_ALL;
+        $builder->strategy(Intent::STRATEGY_ALL);
 
-        $namedType = $this->unwrapType($field->type);
-
-        // GraphQL type name (e.g. "Test")
+        $namedType = $this->unwrapType($context->getParentNode()->type);
         $graphqlType = $namedType->name->value;
 
-        // TEMP: convention-based mapping TODO neew a resolver for this so that people can have their own namespaces for entities
-        $intent->model = 'App\\Entity\\' . $graphqlType;
+        // TODO mapping from GraphQL type to Entity class
+        $builder->model('App\\Entity\\' . $graphqlType);
     }
 
+    // Resolver is a special kind of thing, Because not all directives need resolvers
+    // The reason why we do it here is because the directive defines the execution strategy
+    public function resolver(): QueryExecutorInterface
+    {
+        return new AllExecutor($this->serializer);
+    }
+
+    // Would make sense as a utility function somewhere
     private function unwrapType(TypeNode $type): NamedTypeNode
     {
         while (!$type instanceof NamedTypeNode) {
@@ -67,18 +74,5 @@ final class AllDirective implements FieldDirective, SchemaSDLContributorInterfac
         }
 
         return $type;
-    }
-
-    // TODO hardcoded resolver registration, needs to be dynamic
-    // Should also be registered
-    public function intent(IntentBuilderInterface $builder, FieldDefinitionNode $field): void
-    {
-        $builder->strategy(Intent::STRATEGY_ALL);
-        $builder->model('App\\Entity\\Test'); // TEMP hardcoded model, needs to be dynamic
-    }
-
-    public function resolver(): QueryExecutorInterface
-    {
-        return new AllExecutor($this->serializer);
     }
 }
