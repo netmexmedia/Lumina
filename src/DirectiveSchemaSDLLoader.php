@@ -2,7 +2,7 @@
 
 namespace Netmex\Lumina;
 
-use Netmex\Lumina\Schema\SchemaSDLLoaderInterface;
+use Netmex\Lumina\Schema\Source\SchemaSDLLoaderInterface;
 
 final readonly class DirectiveSchemaSDLLoader implements SchemaSDLLoaderInterface
 {

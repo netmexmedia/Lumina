@@ -5,9 +5,9 @@ namespace Netmex\Lumina\Directives\Definition;
 use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\InputValueDefinitionNode;
 use GraphQL\Language\AST\ObjectTypeDefinitionNode;
+use Netmex\Lumina\Directives\ArgumentDirective;
 use Netmex\Lumina\Intent\EqualsFilter;
 use Netmex\Lumina\Intent\QueryIntent;
-use Netmex\Lumina\Schema\ArgumentDirective;
 use Netmex\Lumina\SchemaSDLContributorInterface;
 
 final class WhereDirective implements ArgumentDirective, SchemaSDLContributorInterface

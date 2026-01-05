@@ -6,18 +6,18 @@ services:
   Netmex\Lumina\:
     resource: '../src/*'
 
-  Netmex\Lumina\Schema\RegistrySchemaSDLLoader:
+  Netmex\Lumina\Schema\Source\RegistrySchemaSDLLoader:
     tags: ['lumina.schema_sdl_loader']
 
-  Netmex\Lumina\Schema\DirectiveSchemaSDLLoader:
+  Netmex\Lumina\Schema\Source\DirectiveSchemaSDLLoader:
     tags: ['lumina.schema_sdl_loader']
 
-  Netmex\Lumina\Schema\CompositeSchemaSDLLoader:
+  Netmex\Lumina\Schema\Source\CompositeSchemaSDLLoader:
     arguments:
       $loaders: !tagged_iterator lumina.schema_sdl_loader
 
-  Netmex\Lumina\Schema\SchemaSDLLoaderInterface:
-    alias: Netmex\Lumina\Schema\CompositeSchemaSDLLoader
+  Netmex\Lumina\Schema\Source\SchemaSDLLoaderInterface:
+    alias: Netmex\Lumina\Schema\Source\CompositeSchemaSDLLoader
 
   # FIELD directives
   Netmex\Lumina\Directives\Definition\AllDirective:
@@ -31,12 +31,12 @@ services:
       - { name: lumina.directive.argument }
       - { name: lumina.schema_sdl }
 
-  Netmex\Lumina\Schema\FileSchemaSource:
+  Netmex\Lumina\Schema\Source\FileSchemaSource:
     arguments:
       $path: '%lumina.schema.directory%'
     tags: ['lumina.schema_source']
 
-  Netmex\Lumina\Schema\SchemaSourceRegistry:
+  Netmex\Lumina\Schema\Source\SchemaSourceRegistry:
     arguments:
       $sources: !tagged_iterator lumina.schema_source
 

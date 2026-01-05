@@ -1,12 +1,10 @@
 <?php
 
-namespace Netmex\Lumina\Schema;
+namespace Netmex\Lumina\Intent;
 
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\TypeDefinitionNode;
 use Netmex\Lumina\Directives\DirectiveRegistry;
-use Netmex\Lumina\Intent\IntentRegistry;
-use Netmex\Lumina\Intent\QueryIntent;
 
 final readonly class IntentBuilder
 {

@@ -4,6 +4,9 @@ namespace Netmex\Lumina\Schema;
 
 use GraphQL\Type\Schema;
 use GraphQL\Utils\BuildSchema;
+use Netmex\Lumina\Intent\IntentBuilder;
+use Netmex\Lumina\Schema\Source\SchemaDocumentLoaderInterface;
+use Netmex\Lumina\Schema\Source\SchemaSDLLoaderInterface;
 use Netmex\Lumina\SchemaBuilderInterface;
 
 final readonly class SchemaBuilder implements SchemaBuilderInterface

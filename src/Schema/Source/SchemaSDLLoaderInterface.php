@@ -1,6 +1,6 @@
 <?php
 
-namespace Netmex\Lumina\Schema;
+namespace Netmex\Lumina\Schema\Source;
 
 interface SchemaSDLLoaderInterface
 {
