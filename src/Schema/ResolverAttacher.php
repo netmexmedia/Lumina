@@ -3,8 +3,8 @@
 namespace Netmex\Lumina\Schema;
 
 use GraphQL\Type\Schema;
+use Netmex\Lumina\Execution\ExecutorRegistry;
 use Netmex\Lumina\Intent\IntentRegistry;
-use Netmex\Lumina\Schema\Execution\ExecutorRegistry;
 
 final readonly class ResolverAttacher
 {

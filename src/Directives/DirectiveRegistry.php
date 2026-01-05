@@ -1,6 +1,6 @@
 <?php
 
-namespace Netmex\Lumina\Schema\Directives;
+namespace Netmex\Lumina\Directives;
 
 use Netmex\Lumina\Schema\ArgumentDirective;
 use Netmex\Lumina\Schema\FieldDirective;

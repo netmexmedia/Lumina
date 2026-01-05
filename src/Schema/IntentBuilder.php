@@ -4,9 +4,9 @@ namespace Netmex\Lumina\Schema;
 
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\TypeDefinitionNode;
+use Netmex\Lumina\Directives\DirectiveRegistry;
 use Netmex\Lumina\Intent\IntentRegistry;
 use Netmex\Lumina\Intent\QueryIntent;
-use Netmex\Lumina\Schema\Directives\DirectiveRegistry;
 
 final readonly class IntentBuilder
 {

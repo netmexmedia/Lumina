@@ -1,6 +1,6 @@
 <?php
 
-namespace Netmex\Lumina\Schema\Directives;
+namespace Netmex\Lumina\Directives;
 
 use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\NamedTypeNode;
@@ -35,7 +35,7 @@ final class AllDirective implements FieldDirective, SchemaSDLContributorInterfac
         // GraphQL type name (e.g. "Test")
         $graphqlType = $namedType->name->value;
 
-        // TEMP: convention-based mapping
+        // TEMP: convention-based mapping TODO neew a resolver for this so that people can have their own namespaces for entities
         $intent->model = 'App\\Entity\\' . $graphqlType;
     }
 

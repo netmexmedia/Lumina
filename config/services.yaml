@@ -20,13 +20,13 @@ services:
     alias: Netmex\Lumina\Schema\CompositeSchemaSDLLoader
 
   # FIELD directives
-  Netmex\Lumina\Schema\Directives\AllDirective:
+  Netmex\Lumina\Directives\AllDirective:
     tags:
       - { name: lumina.directive.field }
       - { name: lumina.schema_sdl }
 
   # Executors
-  Netmex\Lumina\Schema\Directives\WhereDirective:
+  Netmex\Lumina\Directives\WhereDirective:
     tags:
       - { name: lumina.directive.argument }
       - { name: lumina.schema_sdl }
@@ -41,6 +41,6 @@ services:
       $sources: !tagged_iterator lumina.schema_source
 
   # Directives
-  Netmex\Lumina\Schema\Execution\AllExecutor:
+  Netmex\Lumina\Execution\AllExecutor:
     arguments: ['@serializer']
     tags: ['lumina.executor']

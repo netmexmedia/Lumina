@@ -1,6 +1,6 @@
 <?php
 
-namespace Netmex\Lumina\Schema\Execution;
+namespace Netmex\Lumina\Execution;
 
 use Netmex\Lumina\Context\Context;
 use Netmex\Lumina\Intent\QueryIntent;

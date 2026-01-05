@@ -2,7 +2,7 @@
 
 namespace Netmex\Lumina\DependencyInjection\Compiler;
 
-use Netmex\Lumina\Schema\Execution\ExecutorRegistry;
+use Netmex\Lumina\Execution\ExecutorRegistry;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
