@@ -4,7 +4,6 @@ namespace Netmex\Lumina\Schema\Compiler;
 
 use GraphQL\Type\Schema;
 use GraphQL\Utils\BuildSchema;
-use Netmex\Lumina\Schema\Runtime\ResolverAttacher;
 use Netmex\Lumina\Schema\Source\SchemaDocumentLoaderInterface;
 use Netmex\Lumina\Schema\Source\SchemaSDLLoaderInterface;
 
@@ -13,14 +12,14 @@ final readonly class SchemaCompiler
     protected Schema $schema;
     private SchemaSDLLoaderInterface $sdlLoader;
     private SchemaDocumentLoaderInterface $documentLoader;
-    private IntentCompiler $compiler;
-    private ResolverAttacher $resolver;
+    private IntentCompiler $intentCompiler;
+    private FieldResolverCompiler $fieldResolverCompiler;
 
-    public function __construct(SchemaSDLLoaderInterface $sdlLoader, SchemaDocumentLoaderInterface $documentLoader, IntentCompiler $compiler, ResolverAttacher $resolver) {
-        $this->sdlLoader      = $sdlLoader;
+    public function __construct(SchemaSDLLoaderInterface $sdlLoader, SchemaDocumentLoaderInterface $documentLoader, IntentCompiler $intentCompiler, FieldResolverCompiler $fieldResolverCompiler) {
+        $this->sdlLoader = $sdlLoader;
         $this->documentLoader = $documentLoader;
-        $this->compiler       = $compiler;
-        $this->resolver       = $resolver;
+        $this->intentCompiler = $intentCompiler;
+        $this->fieldResolverCompiler = $fieldResolverCompiler;
     }
 
     public function schema(): Schema
@@ -35,8 +34,8 @@ final readonly class SchemaCompiler
         $schema   = BuildSchema::build($sdl);
         $document = $this->documentLoader->load();
 
-        $intents = $this->compiler->compile($document);
-        $this->resolver->attach($schema, $intents);
+        $intents = $this->intentCompiler->compile($document);
+        $this->fieldResolverCompiler->compile($schema, $intents);
 
         return $schema;
     }

@@ -1,18 +1,18 @@
 <?php
 
-namespace Netmex\Lumina\Schema\Runtime;
+namespace Netmex\Lumina\Schema\Compiler;
 
 use GraphQL\Type\Schema;
 use Netmex\Lumina\Execution\ExecutorRegistry;
 use Netmex\Lumina\Intent\IntentRegistry;
 
-final readonly class ResolverAttacher
+final readonly class FieldResolverCompiler
 {
     public function __construct(
         private ExecutorRegistry $executorRegistry
     ) {}
 
-    public function attach(Schema $schema, IntentRegistry $intents): void
+    public function compile(Schema $schema, IntentRegistry $intents): void
     {
         $queryType = $schema->getQueryType();
 
