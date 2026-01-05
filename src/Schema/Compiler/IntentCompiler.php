@@ -14,7 +14,7 @@ final readonly class IntentCompiler
         private DirectiveRegistry $directives
     ) {}
 
-    public function build(DocumentNode $document): IntentRegistry
+    public function compile(DocumentNode $document): IntentRegistry
     {
         $registry = new IntentRegistry();
 
