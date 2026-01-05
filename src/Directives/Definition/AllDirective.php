@@ -1,6 +1,6 @@
 <?php
 
-namespace Netmex\Lumina\Directives;
+namespace Netmex\Lumina\Directives\Definition;
 
 use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\NamedTypeNode;

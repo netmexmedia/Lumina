@@ -20,13 +20,13 @@ services:
     alias: Netmex\Lumina\Schema\CompositeSchemaSDLLoader
 
   # FIELD directives
-  Netmex\Lumina\Directives\AllDirective:
+  Netmex\Lumina\Directives\Definition\AllDirective:
     tags:
       - { name: lumina.directive.field }
       - { name: lumina.schema_sdl }
 
   # Executors
-  Netmex\Lumina\Directives\WhereDirective:
+  Netmex\Lumina\Directives\Definition\WhereDirective:
     tags:
       - { name: lumina.directive.argument }
       - { name: lumina.schema_sdl }
