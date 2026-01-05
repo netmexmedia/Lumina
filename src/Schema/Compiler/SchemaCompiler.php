@@ -11,13 +11,17 @@ use Netmex\Lumina\Schema\Source\SchemaSDLLoaderInterface;
 final readonly class SchemaCompiler
 {
     protected Schema $schema;
+    private SchemaSDLLoaderInterface $sdlLoader;
+    private SchemaDocumentLoaderInterface $documentLoader;
+    private IntentCompiler $compiler;
+    private ResolverAttacher $resolver;
 
-    public function __construct(
-        private SchemaSDLLoaderInterface      $sdlLoader,
-        private SchemaDocumentLoaderInterface $documentLoader,
-        private IntentCompiler                $compiler,
-        private ResolverAttacher              $resolver,
-    ) {}
+    public function __construct(SchemaSDLLoaderInterface $sdlLoader, SchemaDocumentLoaderInterface $documentLoader, IntentCompiler $compiler, ResolverAttacher $resolver) {
+        $this->sdlLoader      = $sdlLoader;
+        $this->documentLoader = $documentLoader;
+        $this->compiler       = $compiler;
+        $this->resolver       = $resolver;
+    }
 
     public function schema(): Schema
     {

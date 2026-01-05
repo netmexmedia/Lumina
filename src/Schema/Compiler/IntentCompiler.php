@@ -10,9 +10,11 @@ use Netmex\Lumina\Intent\QueryIntent;
 
 final readonly class IntentCompiler
 {
-    public function __construct(
-        private DirectiveRegistry $directives
-    ) {}
+    private DirectiveRegistry $directives;
+
+    public function __construct(DirectiveRegistry $directives) {
+        $this->directives = $directives;
+    }
 
     public function compile(DocumentNode $document): IntentRegistry
     {
