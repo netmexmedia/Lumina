@@ -2,32 +2,42 @@
 
 namespace Netmex\Lumina\Schema\Compiler;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Schema;
-use Netmex\Lumina\Execution\ExecutorRegistry;
-use Netmex\Lumina\Intent\IntentRegistry;
+use Netmex\Lumina\Context\Context;
+use Netmex\Lumina\Execution\DoctrineExecution;
 
 final readonly class FieldResolverCompiler
 {
-    public function __construct(
-        private ExecutorRegistry $executorRegistry
-    ) {}
+    private DoctrineExecution $execution;
+    public function __construct(DoctrineExecution $doctrineExecution) {
+        $this->execution = $doctrineExecution;
+    }
 
-    public function compile(Schema $schema, IntentRegistry $intents): void
+    public function compile(Schema $schema): void
     {
         $queryType = $schema->getQueryType();
-
-        foreach ($intents->all() as $intent) {
-            if ($intent->type !== 'Query') {
-                continue;
-            }
-
-            $field = $queryType->getField($intent->field);
-
-            $field->resolveFn = function ($root, $args, $context) use ($intent) {
-                return $this->executorRegistry
-                    ->forStrategy($intent->strategy)
-                    ->execute($intent, $args, $context);
-            };
+        if ($queryType === null) {
+            throw new \RuntimeException(
+                'GraphQL schema must define a Query root type.'
+            );
         }
+
+        foreach ($queryType->getFields() as $field) {
+            $field->resolveFn = $this->makeResolver($field);
+        }
+    }
+
+    private function makeResolver($field): callable
+    {
+        return function (mixed $root, array $arguments, Context $context, ResolveInfo $info ) use ($field)
+        {
+            return $this->execution->executeField(
+                $field,
+                $arguments,
+                $context,
+                $info
+            );
+        };
     }
 }

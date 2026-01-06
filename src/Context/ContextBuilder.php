@@ -13,7 +13,6 @@ readonly class ContextBuilder implements ContextBuilderInterface
     public function build(): Context
     {
         return new Context(
-            user: null,
             entityManager: $this->entityManager,
         );
     }

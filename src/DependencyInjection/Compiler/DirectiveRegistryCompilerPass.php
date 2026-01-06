@@ -17,18 +17,19 @@ final class DirectiveRegistryCompilerPass implements CompilerPassInterface
 
         $registry = $container->findDefinition(DirectiveRegistry::class);
 
-        // Field directives
-        foreach ($container->findTaggedServiceIds('lumina.directive.field') as $id => $_) {
-            $registry->addMethodCall('registerField', [
-                new Reference($id),
-            ]);
-        }
+        foreach ($container->findTaggedServiceIds('lumina.directive') as $id => $tags) {
+            $definition = $container->getDefinition($id);
+            $className = $definition->getClass();
 
-        // Argument directives
-        foreach ($container->findTaggedServiceIds('lumina.directive.argument') as $id => $_) {
-            $registry->addMethodCall('registerArgument', [
+            $registry->addMethodCall('register', [
                 new Reference($id),
             ]);
+
+            $registry->addMethodCall('add', [
+                $className::name(),
+                $className,
+            ]);
+
         }
     }
 }

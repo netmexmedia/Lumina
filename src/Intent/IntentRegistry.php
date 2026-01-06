@@ -2,23 +2,28 @@
 
 namespace Netmex\Lumina\Intent;
 
+use Netmex\Lumina\Directives\Definition\AbstractDirective;
+
+// TODO: This isnt quite right, as multiple intents may exist for a single key
 final class IntentRegistry
 {
-    /** @var array<string, Intent> */
-    private array $intents = [];
+    /** @var array<string, AbstractDirective[]> */
+    private array $directives = [];
 
-    public function add(Intent $intent): void
+    public function add(string $key, AbstractDirective $directive): void
     {
-        $this->intents[$intent->type . '.' . $intent->field] = $intent;
+        $this->directives[$key][] = $directive;
     }
 
-    public function get(string $type, string $field): ?Intent
+    /** @return AbstractDirective[] */
+    public function get(string $key): array
     {
-        return $this->intents["$type.$field"] ?? null;
+        return $this->directives[$key] ?? [];
     }
 
+    /** @return array<string, AbstractDirective[]> */
     public function all(): array
     {
-        return array_values($this->intents);
+        return $this->directives;
     }
 }

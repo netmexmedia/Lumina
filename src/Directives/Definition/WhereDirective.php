@@ -2,53 +2,33 @@
 
 namespace Netmex\Lumina\Directives\Definition;
 
-use GraphQL\Language\AST\FieldDefinitionNode;
-use GraphQL\Language\AST\InputValueDefinitionNode;
-use GraphQL\Language\AST\ObjectTypeDefinitionNode;
-use Netmex\Lumina\Directives\ArgumentDirective;
-use Netmex\Lumina\Directives\DirectiveContext;
-use Netmex\Lumina\Intent\Builder\IntentBuilderInterface;
-use Netmex\Lumina\Intent\EqualsFilter;
-use Netmex\Lumina\Intent\Intent;
-use Netmex\Lumina\Schema\SchemaSDLContributorInterface;
+use Doctrine\ORM\QueryBuilder;
+use Netmex\Lumina\Directives\ArgumentBuilderDirectiveInterface;
 
-final class WhereDirective implements ArgumentDirective, SchemaSDLContributorInterface
+final class WhereDirective extends AbstractDirective implements ArgumentBuilderDirectiveInterface
 {
-    public function name(): string
+    public static function name(): string
     {
         return 'where';
     }
 
-    public function definition(): string
+    public static function definition(): string
     {
         return <<<'GRAPHQL'
             directive @where(
                 on: String
-            ) on ARGUMENT_DEFINITION
+            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
         GRAPHQL;
     }
 
-    public function applyToArgument(Intent $intent, InputValueDefinitionNode $argument, FieldDefinitionNode $field, ObjectTypeDefinitionNode $parentType): void {
-        $intent->filters[] = new EqualsFilter(
-            argument: $argument->name->value,
-            column: $argument->name->value
-        );
-    }
-
-    // TODO hardcoded resolver registration, needs to be dynamic
-    // Should also be registered
-    public function intent(IntentBuilderInterface $builder, DirectiveContext $context): void
+    public function handleArgumentBuilder(QueryBuilder $queryBuilder, $value): QueryBuilder
     {
-        $builder->addFilter(
-            new EqualsFilter(
-                argument: $context->getName(),
-                column: $context->getName()
-            )
-        );
-    }
+        $column = $this->nodeName();
+        $param = ':' . $column."_param";
 
-    public function resolver(): QueryExecutorInterface
-    {
-        return new AllExecutor($this->serializer);
+        $queryBuilder->andWhere("e.$column = $param")
+            ->setParameter($param, $value);
+
+        return $queryBuilder;
     }
 }

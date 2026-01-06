@@ -33,9 +33,9 @@ final readonly class SchemaCompiler
 
         $schema   = BuildSchema::build($sdl);
         $document = $this->documentLoader->load();
+        $this->intentCompiler->compile($document);
 
-        $intents = $this->intentCompiler->compile($document);
-        $this->fieldResolverCompiler->compile($schema, $intents);
+        $this->fieldResolverCompiler->compile($schema);
 
         return $schema;
     }

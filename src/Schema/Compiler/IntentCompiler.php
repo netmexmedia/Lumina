@@ -5,78 +5,69 @@ namespace Netmex\Lumina\Schema\Compiler;
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\TypeDefinitionNode;
+use Netmex\Lumina\Directives\Definition\AbstractDirective;
 use Netmex\Lumina\Directives\DirectiveContext;
 use Netmex\Lumina\Directives\DirectiveRegistry;
 use Netmex\Lumina\Intent\Builder\IntentBuilder;
 use Netmex\Lumina\Intent\Builder\IntentBuilderInterface;
 use Netmex\Lumina\Intent\Intent;
 use Netmex\Lumina\Intent\IntentRegistry;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 
 final readonly class IntentCompiler
 {
     private DirectiveRegistry $directives;
+    private IntentRegistry $intentRegistry;
+    private ServiceLocator $serviceLocator;
 
-    public function __construct(DirectiveRegistry $directives) {
+    public function __construct(
+        DirectiveRegistry $directives,
+        IntentRegistry $intentRegistry,
+        ServiceLocator $serviceLocator
+    ) {
         $this->directives = $directives;
+        $this->intentRegistry = $intentRegistry;
+        $this->serviceLocator = $serviceLocator;
     }
 
     public function compile(DocumentNode $document): IntentRegistry
     {
-        $registry = new IntentRegistry();
-
         foreach ($document->definitions as $definition) {
             if (!$definition instanceof TypeDefinitionNode) {
                 continue;
             }
 
-            foreach ($definition->fields as $field) {
-                $intent = $this->compileField($definition, $field);
-                $registry->add($intent);
+            foreach ($definition->fields as $fieldDefinitionNode) {
+                $this->compileField($definition, $fieldDefinitionNode);
             }
         }
 
-        return $registry;
+        return $this->intentRegistry;
     }
 
-    private function compileField(TypeDefinitionNode $typeDefinitionNode, FieldDefinitionNode $fieldDefinitionNode): Intent
+    private function compileField(TypeDefinitionNode $typeDefinitionNode, FieldDefinitionNode $fieldDefinitionNode): void
     {
-        $typeName = $typeDefinitionNode->name->value;
-        $fieldName = $fieldDefinitionNode->name->value;
-
-        $builder = new IntentBuilder();
-        $builder->type($typeName)->field($fieldName);
-
-        $this->applyFieldDirectives($builder, $fieldDefinitionNode);
-        $this->applyArgumentDirectives($builder, $fieldDefinitionNode);
-
-        return $builder->build();
-    }
-
-    private function applyFieldDirectives(IntentBuilderInterface $builder, FieldDefinitionNode $fieldDefinitionNode): void
-    {
-        $context = new DirectiveContext();
-        $context->setParentNode($fieldDefinitionNode);
-        $context->setName($fieldDefinitionNode->name->value);
-
-        foreach ($fieldDefinitionNode->directives as $directiveNode) {
-            $this->directives->field($directiveNode->name->value)?->intent($builder, $context->withNode($directiveNode));
+        $this->applyDirectives($fieldDefinitionNode->directives, $fieldDefinitionNode);
+        foreach ($fieldDefinitionNode->arguments as $argNode) {
+            $this->applyDirectives($argNode->directives, $argNode);
         }
     }
 
-    private function applyArgumentDirectives(IntentBuilderInterface $builder, FieldDefinitionNode $fieldDefinitionNode): void
+    private function instantiateDirective(string $name, object $definitionNode, object $directiveNode): AbstractDirective
     {
-        $context = new DirectiveContext();
-        $context->setParentNode($fieldDefinitionNode);
+        $directive = clone $this->serviceLocator->get($this->directives->get($name));
+        $directive->directiveNode = $directiveNode;
+        $directive->definitionNode = $definitionNode;
 
-        foreach ($fieldDefinitionNode->arguments as $inputValueDefinitionNode) {
-            foreach ($inputValueDefinitionNode->directives as $directiveNode) {
-                $this->directives->argument($directiveNode->name->value)?->intent(
-                    $builder,
-                    $context
-                        ->withNode($directiveNode)
-                        ->withName($inputValueDefinitionNode->name->value)
-                );
-            }
+        return $directive;
+    }
+
+    private function applyDirectives(iterable $directiveNodes, object $definitionNode): void
+    {
+        foreach ($directiveNodes as $directiveNode) {
+            $directiveName = $directiveNode->name->value;
+            $directive = $this->instantiateDirective($directiveName, $definitionNode, $directiveNode);
+            $this->intentRegistry->add($directiveName, $directive);
         }
     }
 }

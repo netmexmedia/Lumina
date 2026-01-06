@@ -6,7 +6,6 @@ use Netmex\Lumina\Config\LuminaConfig;
 use Netmex\Lumina\Config\SchemaConfig;
 use Netmex\Lumina\DependencyInjection\Compiler\DirectiveRegistryCompilerPass;
 use Netmex\Lumina\DependencyInjection\Compiler\DirectiveSchemaSDLCompilerPass;
-use Netmex\Lumina\DependencyInjection\Compiler\ExecutorRegistryCompilerPass;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -20,10 +19,6 @@ class LuminaBundle extends AbstractBundle
 
         $container->addCompilerPass(
             new DirectiveRegistryCompilerPass()
-        );
-
-        $container->addCompilerPass(
-            new ExecutorRegistryCompilerPass()
         );
 
         $container->addCompilerPass(

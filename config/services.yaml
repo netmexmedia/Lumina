@@ -6,6 +6,10 @@ services:
   Netmex\Lumina\:
     resource: '../src/*'
 
+  Netmex\Lumina\Schema\Compiler\IntentCompiler:
+    arguments:
+      $serviceLocator: !tagged_locator lumina.directive
+
   Netmex\Lumina\Schema\Source\RegistrySchemaSDLLoader:
     tags: ['lumina.schema_sdl_loader']
 
@@ -19,17 +23,26 @@ services:
   Netmex\Lumina\Schema\Source\SchemaSDLLoaderInterface:
     alias: Netmex\Lumina\Schema\Source\CompositeSchemaSDLLoader
 
-  # FIELD directives
+  # FIELD directives @depricated tags sdl,field and argument should can be removed
   Netmex\Lumina\Directives\Definition\AllDirective:
     tags:
       - { name: lumina.directive.field }
       - { name: lumina.schema_sdl }
+      - { name: lumina.directive }
+
+  Netmex\Lumina\Directives\Definition\FindDirective:
+    tags:
+      - { name: lumina.directive.field }
+      - { name: lumina.schema_sdl }
+      - { name: lumina.directive }
 
   # Executors
   Netmex\Lumina\Directives\Definition\WhereDirective:
     tags:
       - { name: lumina.directive.argument }
       - { name: lumina.schema_sdl }
+      - { name: lumina.directive }
+
 
   Netmex\Lumina\Schema\Source\FileSchemaSource:
     arguments:
@@ -40,7 +53,3 @@ services:
     arguments:
       $sources: !tagged_iterator lumina.schema_source
 
-  # Directives
-  Netmex\Lumina\Execution\AllExecutor:
-    arguments: ['@serializer']
-    tags: ['lumina.executor']

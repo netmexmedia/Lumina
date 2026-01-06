@@ -10,9 +10,8 @@ readonly class Context
     public readonly ?object $user;
     public readonly EntityManagerInterface $entityManager;
 
-    public function __construct(?object $user, EntityManagerInterface $entityManager)
+    public function __construct(EntityManagerInterface $entityManager)
     {
-        $this->user = $user;
         $this->entityManager = $entityManager;
     }
 }
