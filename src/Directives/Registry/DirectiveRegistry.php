@@ -1,6 +1,6 @@
 <?php
 
-namespace Netmex\Lumina\Directives\Registery;
+namespace Netmex\Lumina\Directives\Registry;
 
 use Netmex\Lumina\Directives\AbstractDirective;
 

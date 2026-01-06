@@ -2,7 +2,7 @@
 
 namespace Netmex\Lumina\DependencyInjection\Compiler;
 
-use Netmex\Lumina\Directives\Registery\DirectiveRegistry;
+use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 

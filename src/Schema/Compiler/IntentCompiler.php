@@ -6,7 +6,7 @@ use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\TypeDefinitionNode;
 use Netmex\Lumina\Directives\AbstractDirective;
-use Netmex\Lumina\Directives\Registery\DirectiveRegistry;
+use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Netmex\Lumina\Intent\Builder\IntentBuilder;
 use Netmex\Lumina\Intent\Builder\IntentBuilderInterface;
 use Netmex\Lumina\Intent\Intent;
