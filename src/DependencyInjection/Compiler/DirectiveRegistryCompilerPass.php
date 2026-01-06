@@ -5,7 +5,6 @@ namespace Netmex\Lumina\DependencyInjection\Compiler;
 use Netmex\Lumina\Directives\DirectiveRegistry;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Reference;
 
 final class DirectiveRegistryCompilerPass implements CompilerPassInterface
 {
@@ -21,11 +20,7 @@ final class DirectiveRegistryCompilerPass implements CompilerPassInterface
             $definition = $container->getDefinition($id);
             $className = $definition->getClass();
 
-            $registry->addMethodCall('register', [
-                new Reference($id),
-            ]);
-
-            $registry->addMethodCall('add', [
+            $registry->addMethodCall('register', arguments: [
                 $className::name(),
                 $className,
             ]);
