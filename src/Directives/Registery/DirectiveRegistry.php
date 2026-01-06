@@ -1,6 +1,8 @@
 <?php
 
-namespace Netmex\Lumina\Directives;
+namespace Netmex\Lumina\Directives\Registery;
+
+use Netmex\Lumina\Directives\AbstractDirective;
 
 final class DirectiveRegistry
 {
