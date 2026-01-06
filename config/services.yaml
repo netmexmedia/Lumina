@@ -13,4 +13,3 @@ services:
   Netmex\Lumina\Schema\Source\SourceLoader:
     arguments:
       $path: '%lumina.schema.directory%'
-

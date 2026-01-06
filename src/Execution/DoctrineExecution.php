@@ -12,7 +12,6 @@ use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Intent\IntentRegistry;
 use Netmex\Lumina\placeholder\TestFieldValue;
 
-// TODO need to figure out how i can avoid running through the AST here again
 class DoctrineExecution implements ExecutionInterface
 {
     private EntityManagerInterface $entityManager;
@@ -23,75 +22,34 @@ class DoctrineExecution implements ExecutionInterface
         $this->intentRegistry = $intentRegistry;
     }
 
-    public function executeField(FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info): array {
+    public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info): array
+    {
+        $intent = $this->intentRegistry->get($parentTypeName, $field->name);
 
-        $resolverDirective = $this->findResolverDirective($field);
-        $queryBuilder = $this->createQueryBuilder($resolverDirective->modelClass());
+        if (!$intent || !$intent->resolverDirective) {
+            throw new \RuntimeException("No resolver intent found for {$parentTypeName}.{$field->name}");
+        }
 
-        $this->applyArgumentDirectives(
-            $field,
-            $queryBuilder,
-            $arguments
-        );
+        $queryBuilder = $this->createQueryBuilder($intent->resolverDirective->modelClass());
 
-        return $this->executeResolverDirective($resolverDirective, $queryBuilder, $arguments, $context, $info);
+        foreach ($intent->argumentDirectives as $argName => $directives) {
+            if (!isset($arguments[$argName])) {
+                continue;
+            }
+            foreach ($directives as $directive) {
+                $directive->handleArgumentBuilder($queryBuilder, $arguments[$argName]);
+            }
+        }
+
+        $resolver = $intent->resolverDirective;
+        $callable = $resolver->resolveField(new TestFieldValue(), $queryBuilder);
+        return $callable(null, $arguments, $context, $info);
     }
 
     private function createQueryBuilder(string $model): QueryBuilder
     {
         return $this->entityManager
-            ->getRepository('App\\Entity\\'. $model)
+            ->getRepository('App\\Entity\\' . $model)
             ->createQueryBuilder('e');
-    }
-
-    private function findResolverDirective(FieldDefinition $field): FieldResolverInterface
-    {
-        foreach ($field->astNode->directives as $directiveNode) {
-
-
-            $directives = $this->intentRegistry->get($directiveNode->name->value);
-
-            foreach ($directives as $directive) {
-                if ($directive instanceof FieldResolverInterface) {
-                    return $directive;
-                }
-            }
-        }
-
-        throw new \RuntimeException(
-            "No resolver directive found for field {$field->name}"
-        );
-    }
-
-    private function applyArgumentDirectives(FieldDefinition $field, QueryBuilder $queryBuilder, array $arguments): void {
-        foreach ($field->astNode->arguments as $argumentNode) {
-            $argName = $argumentNode->name->value;
-
-            if (!array_key_exists($argName, $arguments)) {
-                continue;
-            }
-
-            foreach ($argumentNode->directives as $directiveNode) {
-                $directives = $this->intentRegistry->get($directiveNode->name->value);
-
-                foreach ($directives as $directive) {
-                    if ($directive instanceof ArgumentBuilderDirectiveInterface) {
-                        $directive->handleArgumentBuilder(
-                            $queryBuilder,
-                            $arguments[$argName]
-                        );
-                    }
-                }
-            }
-        }
-    }
-
-    private function executeResolverDirective(FieldResolverInterface $resolverDirective, QueryBuilder $queryBuilder, array $arguments, Context $context, ResolveInfo $info): array {
-        $callable = $resolverDirective->resolveField(
-            new TestFieldValue(),
-            $queryBuilder
-        );
-
-        return $callable(null, $arguments, $context, $info);
     }
 }

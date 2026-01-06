@@ -24,15 +24,15 @@ final readonly class FieldResolverCompiler
         }
 
         foreach ($queryType->getFields() as $field) {
-            $field->resolveFn = $this->makeResolver($field);
+            $field->resolveFn = $this->makeResolver($field, $queryType->name);
         }
     }
 
-    private function makeResolver($field): callable
+    private function makeResolver($field, string $parentTypeName): callable
     {
-        return function (mixed $root, array $arguments, Context $context, ResolveInfo $info ) use ($field)
-        {
+        return function (mixed $root, array $arguments, Context $context, ResolveInfo $info) use ($field, $parentTypeName) {
             return $this->execution->executeField(
+                $parentTypeName,
                 $field,
                 $arguments,
                 $context,
