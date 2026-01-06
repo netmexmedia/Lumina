@@ -166,4 +166,13 @@ Lumina is ideal if you want:
 * schema-first GraphQL
 * strong consistency
 * minimal boilerplate
-* high performance execution
+* high performance 
+
+## Project Status
+#### Actively developed
+The core architecture is stable and functional.
+
+More directives and documentation are planned.
+
+## License
+MIT License
