@@ -1,6 +1,6 @@
 <?php
 
-namespace Netmex\Lumina\Directives;
+namespace Netmex\Lumina\Contracts;
 
 interface DirectiveInterface
 {

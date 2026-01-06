@@ -5,9 +5,9 @@ namespace Netmex\Lumina\Directives\Definition;
 use Doctrine\ORM\QueryBuilder;
 use GraphQL\Type\Definition\ResolveInfo;
 use Netmex\Lumina\Context\Context;
+use Netmex\Lumina\Contracts\FieldResolverInterface;
+use Netmex\Lumina\Contracts\FieldValueInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
-use Netmex\Lumina\Directives\FieldResolverInterface;
-use Netmex\Lumina\Directives\FieldValueInterface;
 
 final class AllDirective extends AbstractDirective implements FieldResolverInterface
 {

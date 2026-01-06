@@ -3,8 +3,8 @@
 namespace Netmex\Lumina\Directives\Definition;
 
 use Doctrine\ORM\QueryBuilder;
+use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
-use Netmex\Lumina\Directives\ArgumentBuilderDirectiveInterface;
 
 final class WhereDirective extends AbstractDirective implements ArgumentBuilderDirectiveInterface
 {

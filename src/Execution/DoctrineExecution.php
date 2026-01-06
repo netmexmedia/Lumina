@@ -7,8 +7,8 @@ use Doctrine\ORM\QueryBuilder;
 use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\ResolveInfo;
 use Netmex\Lumina\Context\Context;
-use Netmex\Lumina\Directives\ArgumentBuilderDirectiveInterface;
-use Netmex\Lumina\Directives\FieldResolverInterface;
+use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
+use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Intent\IntentRegistry;
 use Netmex\Lumina\placeholder\TestFieldValue;
 

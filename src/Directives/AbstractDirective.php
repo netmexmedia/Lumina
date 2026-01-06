@@ -19,6 +19,7 @@ use GraphQL\Language\AST\ScalarTypeDefinitionNode;
 use GraphQL\Language\AST\ScalarTypeExtensionNode;
 use GraphQL\Language\AST\UnionTypeDefinitionNode;
 use GraphQL\Language\AST\UnionTypeExtensionNode;
+use Netmex\Lumina\Contracts\DirectiveInterface;
 
 abstract class AbstractDirective implements DirectiveInterface
 {
