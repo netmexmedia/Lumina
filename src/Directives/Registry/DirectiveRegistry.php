@@ -27,6 +27,7 @@ final class DirectiveRegistry
         return $this->directives;
     }
 
+    // TODO: Seems redundant
     public function registerSDL(AbstractDirective $directive): void
     {
         $this->sdlContributors[] = $directive;
