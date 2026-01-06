@@ -19,11 +19,7 @@ final readonly class IntentCompiler
     private IntentRegistry $intentRegistry;
     private ServiceLocator $serviceLocator;
 
-    public function __construct(
-        DirectiveRegistry $directives,
-        IntentRegistry $intentRegistry,
-        ServiceLocator $serviceLocator
-    ) {
+    public function __construct(DirectiveRegistry $directives, IntentRegistry $intentRegistry, ServiceLocator $serviceLocator) {
         $this->directives = $directives;
         $this->intentRegistry = $intentRegistry;
         $this->serviceLocator = $serviceLocator;
@@ -36,48 +32,72 @@ final readonly class IntentCompiler
                 continue;
             }
 
-            $typeName = $definition->name->value;
-
-            foreach ($definition->fields as $fieldNode) {
-                $this->compileField($typeName, $fieldNode);
-            }
+            $this->compileType($definition);
         }
 
         return $this->intentRegistry;
     }
 
-    private function compileField(string $typeName, FieldDefinitionNode $fieldNode): void
+    private function compileType(TypeDefinitionNode $typeNode): void
+    {
+        $typeName = $typeNode->name->value;
+
+        foreach ($typeNode->fields as $fieldNode) {
+            $intent = $this->buildIntent($typeName, $fieldNode);
+            $this->intentRegistry->add($intent);
+        }
+    }
+
+    private function buildIntent(string $typeName, FieldDefinitionNode $fieldNode): Intent
     {
         $intent = new Intent($typeName, $fieldNode->name->value);
 
-        // Field directives
+        $this->applyFieldDirectives($intent, $fieldNode);
+        $this->applyArgumentDirectives($intent, $fieldNode);
+
+        return $intent;
+    }
+
+    private function applyFieldDirectives(Intent $intent, FieldDefinitionNode $fieldNode): void
+    {
         foreach ($fieldNode->directives as $directiveNode) {
-            $directive = $this->instantiateDirective($directiveNode->name->value, $fieldNode, $directiveNode);
+            $directive = $this->instantiateDirective(
+                $directiveNode->name->value,
+                $fieldNode,
+                $directiveNode
+            );
 
             if ($directive instanceof FieldResolverInterface) {
                 $intent->setResolver($directive);
             }
         }
+    }
 
-        // Argument directives
+    private function applyArgumentDirectives(Intent $intent, FieldDefinitionNode $fieldNode): void
+    {
         foreach ($fieldNode->arguments as $argNode) {
             foreach ($argNode->directives as $directiveNode) {
-                $directive = $this->instantiateDirective($directiveNode->name->value, $argNode, $directiveNode);
+                $directive = $this->instantiateDirective(
+                    $directiveNode->name->value,
+                    $argNode,
+                    $directiveNode
+                );
 
                 if ($directive instanceof ArgumentBuilderDirectiveInterface) {
                     $intent->addArgumentDirective($argNode->name->value, $directive);
                 }
             }
         }
-
-        $this->intentRegistry->add($intent);
     }
 
-    private function instantiateDirective(string $name, object $definitionNode, object $directiveNode): AbstractDirective
-    {
-        $directive = clone $this->serviceLocator->get($this->directives->get($name));
+    private function instantiateDirective(string $name, object $definitionNode, object $directiveNode): AbstractDirective {
+        $directive = clone $this->serviceLocator->get(
+            $this->directives->get($name)
+        );
+
         $directive->directiveNode = $directiveNode;
         $directive->definitionNode = $definitionNode;
+
         return $directive;
     }
 }
