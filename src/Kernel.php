@@ -7,7 +7,6 @@ use GraphQL\GraphQL;
 use Netmex\Lumina\Context\ContextBuilderInterface;
 use Netmex\Lumina\Http\Request\GraphQLRequest;
 use Netmex\Lumina\Schema\Compiler\SchemaCompiler;
-use Netmex\Lumina\Schema\SchemaBuilderInterface;
 
 readonly class Kernel
 {
