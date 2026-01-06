@@ -7,11 +7,10 @@ use Doctrine\ORM\QueryBuilder;
 use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\ResolveInfo;
 use Netmex\Lumina\Context\Context;
-use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
-use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Intent\IntentRegistry;
 use Netmex\Lumina\placeholder\TestFieldValue;
 
+// TODO: In the future we need to account for subscriptions, This requires a new executionMethod
 class DoctrineExecution implements ExecutionInterface
 {
     private EntityManagerInterface $entityManager;
