@@ -24,3 +24,8 @@ final class DirectiveSchemaSDLCompilerPass implements CompilerPassInterface
         }
     }
 }
+
+// Ok so, The SchemaCompiler
+// calls both
+// SchemaSDLLoaderInterface and SchemaDocumentLoaderInterface
+// So i now need to figure out what wec can remove or refactor

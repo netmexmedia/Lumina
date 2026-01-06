@@ -2,7 +2,7 @@
 
 namespace Netmex\Lumina\Intent;
 
-use Netmex\Lumina\Directives\Definition\AbstractDirective;
+use Netmex\Lumina\Directives\AbstractDirective;
 
 // TODO: This isnt quite right, as multiple intents may exist for a single key
 final class IntentRegistry

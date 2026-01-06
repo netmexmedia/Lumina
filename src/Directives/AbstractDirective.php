@@ -1,6 +1,6 @@
 <?php
 
-namespace Netmex\Lumina\Directives\Definition;
+namespace Netmex\Lumina\Directives;
 
 use GraphQL\Language\AST\DirectiveNode;
 use GraphQL\Language\AST\EnumTypeDefinitionNode;
@@ -17,10 +17,8 @@ use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use GraphQL\Language\AST\ObjectTypeExtensionNode;
 use GraphQL\Language\AST\ScalarTypeDefinitionNode;
 use GraphQL\Language\AST\ScalarTypeExtensionNode;
-use GraphQL\Language\AST\TypeNode;
 use GraphQL\Language\AST\UnionTypeDefinitionNode;
 use GraphQL\Language\AST\UnionTypeExtensionNode;
-use Netmex\Lumina\Directives\DirectiveInterface;
 
 abstract class AbstractDirective implements DirectiveInterface
 {
@@ -47,25 +45,6 @@ abstract class AbstractDirective implements DirectiveInterface
         }
 
         return $type->name->value;
-    }
-
-    private function getClassModel(TypeNode $type): string
-    {
-        $namedType = $this->unwrapType($type);
-        $graphqlType = $namedType->name->value;
-
-        dd($graphqlType);
-        // TODO mapping from GraphQL type to Entity class
-        return 'App\\Entity\\' . $graphqlType;
-    }
-
-    private function unwrapType(TypeNode $type): NamedTypeNode
-    {
-        while (!$type instanceof NamedTypeNode) {
-            $type = $type->type;
-        }
-
-        return $type;
     }
 
     public function getDirectiveArgument(string $key, $default = null)

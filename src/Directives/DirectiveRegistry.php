@@ -2,8 +2,6 @@
 
 namespace Netmex\Lumina\Directives;
 
-use Netmex\Lumina\Directives\Definition\AbstractDirective;
-
 final class DirectiveRegistry
 {
     /** @var array<string, AbstractDirective> */
