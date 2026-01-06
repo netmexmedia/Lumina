@@ -10,46 +10,7 @@ services:
     arguments:
       $serviceLocator: !tagged_locator lumina.directive
 
-  Netmex\Lumina\Schema\Source\RegistrySchemaSDLLoader:
-    tags: ['lumina.schema_sdl_loader']
-
-  Netmex\Lumina\Schema\Source\DirectiveSchemaSDLLoader:
-    tags: ['lumina.schema_sdl_loader']
-
-  Netmex\Lumina\Schema\Source\CompositeSchemaSDLLoader:
-    arguments:
-      $loaders: !tagged_iterator lumina.schema_sdl_loader
-
-  Netmex\Lumina\Schema\Source\SchemaSDLLoaderInterface:
-    alias: Netmex\Lumina\Schema\Source\CompositeSchemaSDLLoader
-
-  # FIELD directives @depricated tags sdl,field and argument should can be removed
-  Netmex\Lumina\Directives\Definition\AllDirective:
-    tags:
-      - { name: lumina.directive.field }
-      - { name: lumina.schema_sdl }
-      - { name: lumina.directive }
-
-  Netmex\Lumina\Directives\Definition\FindDirective:
-    tags:
-      - { name: lumina.directive.field }
-      - { name: lumina.schema_sdl }
-      - { name: lumina.directive }
-
-  # Executors
-  Netmex\Lumina\Directives\Definition\WhereDirective:
-    tags:
-      - { name: lumina.directive.argument }
-      - { name: lumina.schema_sdl }
-      - { name: lumina.directive }
-
-
-  Netmex\Lumina\Schema\Source\FileSchemaSource:
+  Netmex\Lumina\Schema\Source\SourceLoader:
     arguments:
       $path: '%lumina.schema.directory%'
-    tags: ['lumina.schema_source']
-
-  Netmex\Lumina\Schema\Source\SchemaSourceRegistry:
-    arguments:
-      $sources: !tagged_iterator lumina.schema_source
 

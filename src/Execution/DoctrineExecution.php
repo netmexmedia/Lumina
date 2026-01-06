@@ -12,6 +12,7 @@ use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Intent\IntentRegistry;
 use Netmex\Lumina\placeholder\TestFieldValue;
 
+// TODO need to figure out how i can avoid running through the AST here again
 class DoctrineExecution implements ExecutionInterface
 {
     private EntityManagerInterface $entityManager;

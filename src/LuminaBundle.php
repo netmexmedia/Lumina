@@ -5,7 +5,6 @@ namespace Netmex\Lumina;
 use Netmex\Lumina\Config\LuminaConfig;
 use Netmex\Lumina\Config\SchemaConfig;
 use Netmex\Lumina\DependencyInjection\Compiler\DirectiveRegistryCompilerPass;
-use Netmex\Lumina\DependencyInjection\Compiler\DirectiveSchemaSDLCompilerPass;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -19,10 +18,6 @@ class LuminaBundle extends AbstractBundle
 
         $container->addCompilerPass(
             new DirectiveRegistryCompilerPass()
-        );
-
-        $container->addCompilerPass(
-            new DirectiveSchemaSDLCompilerPass()
         );
     }
 
@@ -38,6 +33,7 @@ class LuminaBundle extends AbstractBundle
     {
         // Core services
         $container->import(__DIR__ . '/../config/services.yaml');
+        $container->import(__DIR__ . '/../config/directives.yaml');
 
         // Optional future files
         // $container->import(__DIR__ . '/../config/graphql.yaml');
