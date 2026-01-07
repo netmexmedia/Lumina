@@ -58,13 +58,28 @@ class DoctrineExecution implements ExecutionInterface
     private function applyArgumentDirectives($intent, QueryBuilder $queryBuilder, array $arguments): void
     {
         foreach ($intent->argumentDirectives as $argName => $directives) {
-            if (!isset($arguments[$argName])) {
+            $value = $this->getNestedValue($arguments, $argName);
+            if ($value === null) {
                 continue;
             }
+
             foreach ($directives as $directive) {
-                $directive->handleArgumentBuilder($queryBuilder, $arguments[$argName]);
+                $directive->handleArgumentBuilder($queryBuilder, $value);
             }
         }
+    }
+
+    private function getNestedValue(array $args, string $path): mixed
+    {
+        $keys = explode('.', $path);
+        $value = $args;
+        foreach ($keys as $key) {
+            if (!is_array($value) || !array_key_exists($key, $value)) {
+                return null;
+            }
+            $value = $value[$key];
+        }
+        return $value;
     }
 
     private function executeResolver($intent, QueryBuilder $queryBuilder, array $arguments, Context $context, ResolveInfo $info): array
