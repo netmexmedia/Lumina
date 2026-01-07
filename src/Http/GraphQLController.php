@@ -16,8 +16,11 @@ class GraphQLController extends AbstractController
 
     public function __invoke(GraphQLRequest $request): JsonResponse
     {
+        $isDev = $this->getParameter('kernel.environment') === 'dev';
         return new JsonResponse(
-            $this->kernel->execute($request)->toArray(DebugFlag::INCLUDE_DEBUG_MESSAGE | DebugFlag::INCLUDE_TRACE)
+            $this->kernel->execute($request)->toArray(
+                $isDev ? DebugFlag::INCLUDE_DEBUG_MESSAGE | DebugFlag::INCLUDE_TRACE : DebugFlag::NONE
+            )
         );
     }
 }
