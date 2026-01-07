@@ -9,7 +9,3 @@ services:
   Netmex\Lumina\Schema\Compiler\IntentCompiler:
     arguments:
       $serviceLocator: !tagged_locator lumina.directive
-
-  Netmex\Lumina\Schema\Source\SourceLoader:
-    arguments:
-      $path: '%lumina.schema.directory%'

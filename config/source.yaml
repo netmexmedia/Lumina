@@ -1,0 +1,20 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  Netmex\Lumina\Schema\Source\SchemaSourceRegistry:
+    arguments: []
+    public: true
+
+  Netmex\Lumina\Contracts\SchemaSourceInterface: '@Netmex\Lumina\Schema\Source\SchemaSourceRegistry'
+
+  Netmex\Lumina\Schema\Source\FileSchemaSource:
+    arguments:
+      $path: '%lumina.schema.directory%'
+    tags: ['lumina.schema_source']
+
+  Netmex\Lumina\Schema\Source\DirectiveSchemaSource:
+    arguments:
+      $directives: '@Netmex\Lumina\Directives\Registry\DirectiveRegistry'
+    tags: ['lumina.schema_source']

@@ -5,7 +5,9 @@ namespace Netmex\Lumina;
 use Netmex\Lumina\Config\LuminaConfig;
 use Netmex\Lumina\Config\SchemaConfig;
 use Netmex\Lumina\DependencyInjection\Compiler\DirectiveRegistryCompilerPass;
+use Netmex\Lumina\DependencyInjection\Compiler\SchemaSourceCompilerPass;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
@@ -16,9 +18,8 @@ class LuminaBundle extends AbstractBundle
     {
         parent::build($container);
 
-        $container->addCompilerPass(
-            new DirectiveRegistryCompilerPass()
-        );
+        $container->addCompilerPass(new DirectiveRegistryCompilerPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 10);
+        $container->addCompilerPass(new SchemaSourceCompilerPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 0);
     }
 
     public function configure(DefinitionConfigurator $definition): void
@@ -34,6 +35,7 @@ class LuminaBundle extends AbstractBundle
         // Core services
         $container->import(__DIR__ . '/../config/services.yaml');
         $container->import(__DIR__ . '/../config/directives.yaml');
+        $container->import(__DIR__ . '/../config/source.yaml');
 
         // Optional future files
         // $container->import(__DIR__ . '/../config/graphql.yaml');
