@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Netmex\Lumina\DependencyInjection\Compiler;
 
 use Netmex\Lumina\Schema\Source\SchemaSourceRegistry;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Netmex\Lumina\Http\Request;
 
 use GraphQL\Language\AST\DocumentNode;
