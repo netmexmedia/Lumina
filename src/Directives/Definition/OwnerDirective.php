@@ -18,9 +18,7 @@ final class OwnerDirective extends AbstractDirective implements ArgumentBuilderD
     public static function definition(): string
     {
         return <<<'GRAPHQL'
-            directive @owner(
-                permission: String
-            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION | OBJECT
+            directive @owner repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION | OBJECT
         GRAPHQL;
     }
 
