@@ -17,3 +17,8 @@ services:
     tags:
       - { name: lumina.schema_sdl }
       - { name: lumina.directive }
+
+  Netmex\Lumina\Directives\Definition\LikeDirective:
+    tags:
+      - { name: lumina.schema_sdl }
+      - { name: lumina.directive }
