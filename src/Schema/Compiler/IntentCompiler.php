@@ -7,6 +7,7 @@ use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\TypeDefinitionNode;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
+use Netmex\Lumina\Contracts\SchemaSourceInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
 use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Netmex\Lumina\Intent\Intent;
@@ -17,16 +18,20 @@ final readonly class IntentCompiler
 {
     private DirectiveRegistry $directives;
     private IntentRegistry $intentRegistry;
+    private SchemaSourceInterface $schemaSource;
     private ServiceLocator $serviceLocator;
 
-    public function __construct(DirectiveRegistry $directives, IntentRegistry $intentRegistry, ServiceLocator $serviceLocator) {
+    public function __construct(DirectiveRegistry $directives, IntentRegistry $intentRegistry, SchemaSourceInterface $schemaSource, ServiceLocator $serviceLocator) {
         $this->directives = $directives;
         $this->intentRegistry = $intentRegistry;
+        $this->schemaSource = $schemaSource;
         $this->serviceLocator = $serviceLocator;
     }
 
-    public function compile(DocumentNode $document): IntentRegistry
+    public function compile(): IntentRegistry
     {
+        $document = $this->schemaSource->document();
+
         foreach ($document->definitions as $definition) {
             if (!$definition instanceof TypeDefinitionNode) {
                 continue;

@@ -7,18 +7,22 @@ use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Schema;
 use Netmex\Lumina\Context\Context;
+use Netmex\Lumina\Contracts\SchemaSourceInterface;
 use Netmex\Lumina\Execution\DoctrineExecution;
 
 final readonly class FieldResolverCompiler
 {
+    private SchemaSourceInterface $schemaSource;
     private DoctrineExecution $execution;
 
-    public function __construct(DoctrineExecution $doctrineExecution) {
+    public function __construct(SchemaSourceInterface $schemaSource, DoctrineExecution $doctrineExecution) {
+        $this->schemaSource    = $schemaSource;
         $this->execution = $doctrineExecution;
     }
 
-    public function compile(Schema $schema): void
+    public function compile(): void
     {
+        $schema = $this->schemaSource->schema();
         $this->compileType($schema->getQueryType(), 'Query');
         $this->compileType($schema->getMutationType(), 'Mutation');
     }
