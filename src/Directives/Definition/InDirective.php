@@ -27,12 +27,10 @@ class InDirective extends AbstractDirective implements ArgumentBuilderDirectiveI
     public function handleArgumentBuilder(QueryBuilder $queryBuilder, $value): QueryBuilder
     {
         $column = $this->nodeName();
-        $startParam = ':' . $column . '_start';
-        $endParam = ':' . $column . '_end';
+        $param = ':' . $column . '_param';
 
-        $queryBuilder->andWhere("e.$column BETWEEN $startParam AND $endParam")
-            ->setParameter($startParam, $start)
-            ->setParameter($endParam, $end);
+        $queryBuilder->andWhere("e.$column IN ($param)")
+            ->setParameter($param, $value);
 
         return $queryBuilder;
     }
