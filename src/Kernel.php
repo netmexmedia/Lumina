@@ -5,11 +5,9 @@ namespace Netmex\Lumina;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\GraphQL;
 use Netmex\Lumina\Context\ContextBuilderInterface;
-use Netmex\Lumina\Contracts\SchemaSourceInterface;
 use Netmex\Lumina\Http\Request\GraphQLRequest;
 use Netmex\Lumina\Schema\Compiler\FieldResolverCompiler;
 use Netmex\Lumina\Schema\Compiler\IntentCompiler;
-use Netmex\Lumina\Schema\Compiler\SchemaCompiler;
 use Netmex\Lumina\Schema\Source\SchemaSourceRegistry;
 
 readonly class Kernel
