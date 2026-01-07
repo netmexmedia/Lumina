@@ -3,22 +3,8 @@ services:
     autowire: true
     autoconfigure: true
 
-  Netmex\Lumina\Directives\Definition\AllDirective:
-    tags:
-      - { name: lumina.schema_sdl }
-      - { name: lumina.directive }
-
-  Netmex\Lumina\Directives\Definition\FindDirective:
-    tags:
-      - { name: lumina.schema_sdl }
-      - { name: lumina.directive }
-
-  Netmex\Lumina\Directives\Definition\WhereDirective:
-    tags:
-      - { name: lumina.schema_sdl }
-      - { name: lumina.directive }
-
-  Netmex\Lumina\Directives\Definition\LikeDirective:
+  Netmex\Lumina\Directives\Definition\:
+    resource: '../src/Directives/Definition/*'
     tags:
       - { name: lumina.schema_sdl }
       - { name: lumina.directive }
