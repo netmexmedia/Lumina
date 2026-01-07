@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Netmex\Lumina\Execution;
-
-use Netmex\Lumina\Context\Context;
+namespace Netmex\Lumina\Contracts;
 
 interface ExecutionInterface
 {
