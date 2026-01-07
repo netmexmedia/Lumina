@@ -44,7 +44,11 @@ final class FindDirective extends AbstractDirective implements FieldResolverInte
         {
             $result = $queryBuilder->getQuery()->getSingleResult();
 
-            return $normalizer->normalize($result);
+            return $normalizer->normalize($result, null, [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+            ]);
         };
     }
 }

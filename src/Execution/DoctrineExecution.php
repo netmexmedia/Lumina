@@ -28,7 +28,10 @@ class DoctrineExecution implements ExecutionInterface
     {
         $intent = $this->getIntent($parentTypeName, $field);
         $queryBuilder = $this->createQueryBuilder($intent->resolverDirective->modelClass());
+
+        $this->applyTypeDirectives($intent, $queryBuilder, $arguments);
         $this->applyArgumentDirectives($intent, $queryBuilder, $arguments);
+
         return $this->executeResolver($intent, $queryBuilder, $arguments, $context, $info);
     }
 
@@ -41,6 +44,15 @@ class DoctrineExecution implements ExecutionInterface
         }
 
         return $intent;
+    }
+
+    private function applyTypeDirectives($intent, QueryBuilder $queryBuilder, array $arguments): void
+    {
+        foreach ($intent->getTypeDirectives() as $typeName => $typeDirective) {
+            foreach ($typeDirective as $directive) {
+                $directive->handleArgumentBuilder($queryBuilder, $arguments);
+            }
+        }
     }
 
     private function applyArgumentDirectives($intent, QueryBuilder $queryBuilder, array $arguments): void

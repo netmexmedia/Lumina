@@ -49,9 +49,43 @@ final readonly class IntentCompiler
     {
         $typeName = $typeNode->name->value;
 
+        // Step 1: collect type-level directives
+        $typeDirectives = $this->collectTypeDirectives($typeNode);
+
+        // Step 2: build and register field intents
         foreach ($typeNode->fields as $fieldNode) {
             $intent = $this->buildIntent($typeName, $fieldNode);
+
+            // Step 3: attach type directives to each field intent
+            $this->applyTypeDirectivesToIntent($intent, $typeDirectives);
+
             $this->intentRegistry->add($intent);
+        }
+    }
+
+    /**
+     * Collect all directives applied to a type
+     */
+    private function collectTypeDirectives(TypeDefinitionNode $typeNode): array
+    {
+        $directives = [];
+        foreach ($typeNode->directives as $directiveNode) {
+            $directives[] = $this->instantiateDirective(
+                $directiveNode->name->value,
+                $typeNode,
+                $directiveNode
+            );
+        }
+        return $directives;
+    }
+
+    /**
+     * Apply collected type-level directives to a field intent
+     */
+    private function applyTypeDirectivesToIntent(Intent $intent, array $typeDirectives): void
+    {
+        foreach ($typeDirectives as $directive) {
+            $intent->applyTypeDirective($directive->name(), $directive);
         }
     }
 
