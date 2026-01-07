@@ -10,6 +10,7 @@ use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\ResolveInfo;
 use Netmex\Lumina\Context\Context;
 use Netmex\Lumina\Contracts\ExecutionInterface;
+use Netmex\Lumina\Intent\Intent;
 use Netmex\Lumina\Intent\IntentRegistry;
 use Netmex\Lumina\placeholder\TestFieldValue;
 
@@ -46,7 +47,7 @@ class DoctrineExecution implements ExecutionInterface
         return $intent;
     }
 
-    private function applyTypeDirectives($intent, QueryBuilder $queryBuilder, array $arguments): void
+    private function applyTypeDirectives(Intent $intent, QueryBuilder $queryBuilder, array $arguments): void
     {
         foreach ($intent->getTypeDirectives() as $typeName => $typeDirective) {
             foreach ($typeDirective as $directive) {
@@ -55,7 +56,7 @@ class DoctrineExecution implements ExecutionInterface
         }
     }
 
-    private function applyArgumentDirectives($intent, QueryBuilder $queryBuilder, array $arguments): void
+    private function applyArgumentDirectives(Intent $intent, QueryBuilder $queryBuilder, array $arguments): void
     {
         foreach ($intent->argumentDirectives as $argName => $directives) {
             $value = $this->getNestedValue($arguments, $argName);
@@ -82,17 +83,34 @@ class DoctrineExecution implements ExecutionInterface
         return $value;
     }
 
-    private function executeResolver($intent, QueryBuilder $queryBuilder, array $arguments, Context $context, ResolveInfo $info): array
+    private function executeResolver(Intent $intent, QueryBuilder $queryBuilder, array $arguments, Context $context, ResolveInfo $info): array
     {
         $resolver = $intent->resolverDirective;
         $callable = $resolver->resolveField(new TestFieldValue(), $queryBuilder);
         return $callable(null, $arguments, $context, $info);
     }
 
-    private function createQueryBuilder(string $model): QueryBuilder
+    private function createQueryBuilder(string $shortClassName): QueryBuilder
     {
+        $fqcn = $this->resolveEntityFQCN($shortClassName);
+
+        if (!$fqcn) {
+            throw new \RuntimeException("Cannot find a Doctrine entity with short name '$shortClassName'");
+        }
+
         return $this->entityManager
-            ->getRepository('App\\Entity\\' . $model)
+            ->getRepository($fqcn)
             ->createQueryBuilder('e');
+    }
+
+    private function resolveEntityFQCN(string $shortName): ?string
+    {
+        foreach ($this->entityManager->getMetadataFactory()->getAllMetadata() as $meta) {
+            if ($meta->getReflectionClass()->getShortName() === $shortName) {
+                return $meta->getName(); // return FQCN
+            }
+        }
+
+        return null;
     }
 }

@@ -42,70 +42,68 @@ final class IntentCompiler
     {
         $document = $this->schemaSource->document();
 
-        $this->registerInputTypes($document);
-        $this->compileTypes($document);
+        // Register all input types
+        foreach ($document->definitions as $def) {
+            if ($def instanceof InputObjectTypeDefinitionNode) {
+                $this->inputTypes[$def->name->value] = $def;
+            }
+        }
+
+        // Compile all other types
+        foreach ($document->definitions as $def) {
+            if ($def instanceof TypeDefinitionNode) {
+                $this->compileType($def);
+            }
+        }
 
         return $this->intentRegistry;
     }
 
-    private function registerInputTypes(DocumentNode $document): void
-    {
-        foreach ($document->definitions as $definition) {
-            if ($definition instanceof InputObjectTypeDefinitionNode) {
-                $this->inputTypes[$definition->name->value] = $definition;
-            }
-        }
-    }
-
-    private function compileTypes(DocumentNode $document): void
-    {
-        foreach ($document->definitions as $definition) {
-            if ($definition instanceof TypeDefinitionNode) {
-                $this->compileType($definition);
-            }
-        }
-    }
-
     private function compileType(TypeDefinitionNode $typeNode): void
     {
-        $intentTypeDirectives = $this->collectTypeDirectives($typeNode);
+        $typeName = $typeNode->name->value;
+        $typeDirectives = $this->collectTypeDirectives($typeNode);
 
         foreach ($typeNode->fields as $fieldNode) {
-            if (!($fieldNode instanceof FieldDefinitionNode)) {
-                continue;
-            }
+            if (!$fieldNode instanceof FieldDefinitionNode) continue;
 
-            $intent = new Intent($typeNode->name->value, $fieldNode->name->value);
-            $this->applyTypeDirectivesToIntent($intent, $intentTypeDirectives);
-            $this->applyFieldDirectives($intent, $fieldNode);
+            $intent = new Intent($typeName, $fieldNode->name->value);
+
+            $this->applyTypeDirectivesToIntent($intent, $typeDirectives);
 
             foreach ($fieldNode->arguments as $argNode) {
                 $this->applyArgumentDirectives($intent, $argNode);
             }
 
+            $this->applyFieldDirectives($intent, $fieldNode);
+
             $this->intentRegistry->add($intent);
         }
     }
 
-    public function applyArgumentDirectives(Intent $intent, InputValueDefinitionNode $argNode, string $path = ''): void
+    private function applyArgumentDirectives(Intent $intent, InputValueDefinitionNode $argNode, string $path = ''): void
     {
-        $argPath = $path ? $path . '.' . $argNode->name->value : $argNode->name->value;
+        $argName = $path === '' ? $argNode->name->value : $path . '.' . $argNode->name->value;
 
         foreach ($argNode->directives as $directiveNode) {
-            $directive = $this->instantiateDirective($directiveNode->name->value, $argNode, $directiveNode);
+            $directive = $this->instantiateDirective(
+                $directiveNode->name->value,
+                $argNode,
+                $directiveNode
+            );
 
             if ($directive instanceof ArgumentBuilderDirectiveInterface) {
-                $intent->addArgumentDirective($argPath, $directive);
+                $intent->addArgumentDirective($argName, $directive);
             }
         }
 
+        // Handle nested input objects recursively
         $namedType = $this->getNamedType($argNode->type);
-        if (!isset($this->inputTypes[$namedType])) {
-            return;
-        }
+        if (!isset($this->inputTypes[$namedType])) return;
 
-        foreach ($this->inputTypes[$namedType]->fields as $nestedArg) {
-            $this->applyArgumentDirectives($intent, $nestedArg, $argPath);
+        $inputObject = $this->inputTypes[$namedType];
+        foreach ($inputObject->fields as $nestedArg) {
+            $this->applyArgumentDirectives($intent, $nestedArg, $argName);
         }
     }
 
@@ -126,14 +124,18 @@ final class IntentCompiler
     {
         $directives = [];
         foreach ($typeNode->directives as $directiveNode) {
-            $directives[] = $this->instantiateDirective($directiveNode->name->value, $typeNode, $directiveNode);
+            $directives[] = $this->instantiateDirective(
+                $directiveNode->name->value,
+                $typeNode,
+                $directiveNode
+            );
         }
         return $directives;
     }
 
-    private function applyTypeDirectivesToIntent(Intent $intent, array $directives): void
+    private function applyTypeDirectivesToIntent(Intent $intent, array $typeDirectives): void
     {
-        foreach ($directives as $directive) {
+        foreach ($typeDirectives as $directive) {
             $intent->applyTypeDirective($directive->name(), $directive);
         }
     }
@@ -141,7 +143,11 @@ final class IntentCompiler
     private function applyFieldDirectives(Intent $intent, FieldDefinitionNode $fieldNode): void
     {
         foreach ($fieldNode->directives as $directiveNode) {
-            $directive = $this->instantiateDirective($directiveNode->name->value, $fieldNode, $directiveNode);
+            $directive = $this->instantiateDirective(
+                $directiveNode->name->value,
+                $fieldNode,
+                $directiveNode
+            );
 
             if ($directive instanceof FieldResolverInterface) {
                 $intent->setResolver($directive);
