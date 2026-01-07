@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Netmex\Lumina\Context;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Netmex\Lumina\Contracts\ContextBuilderInterface;
 
 readonly class ContextBuilder implements ContextBuilderInterface
 {

@@ -6,7 +6,7 @@ namespace Netmex\Lumina;
 
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\GraphQL;
-use Netmex\Lumina\Context\ContextBuilderInterface;
+use Netmex\Lumina\Contracts\ContextBuilderInterface;
 use Netmex\Lumina\Http\Request\GraphQLRequest;
 use Netmex\Lumina\Schema\Compiler\FieldResolverCompiler;
 use Netmex\Lumina\Schema\Compiler\IntentCompiler;

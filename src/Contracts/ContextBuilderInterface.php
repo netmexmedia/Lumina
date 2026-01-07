@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Netmex\Lumina\Context;
+namespace Netmex\Lumina\Contracts;
+
+use Netmex\Lumina\Context\Context;
 
 interface ContextBuilderInterface
 {
