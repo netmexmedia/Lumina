@@ -15,7 +15,7 @@ final class SchemaSourceRegistry implements SchemaSourceInterface
     /** @param SchemaSourceInterface[] $sources */
     private array $sources;
     private ?Schema $schema = null;
-    private ?DocumentNode $document = null; // <- nullable now
+    private ?DocumentNode $document = null;
 
     public function __construct(array $sources) {
         $this->sources = $sources;
@@ -23,12 +23,6 @@ final class SchemaSourceRegistry implements SchemaSourceInterface
 
     public function getSchema(): ?Schema
     {
-        return $this->schema;
-    }
-
-    public function buildSchemaFromSdl(): Schema
-    {
-        $this->schema = BuildSchema::build($this->load());
         return $this->schema;
     }
 
