@@ -28,7 +28,9 @@ class DoctrineExecution implements ExecutionInterface
     public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info): array
     {
         $intent = $this->getIntent($parentTypeName, $field);
-        $queryBuilder = $this->createQueryBuilder($intent->resolverDirective->modelClass());
+
+        $queryBuilder = $this->createQueryBuilder($intent->resolverDirective->getModel());
+
 
         $this->applyTypeDirectives($intent, $queryBuilder, $arguments);
         $this->applyArgumentDirectives($intent, $queryBuilder, $arguments);

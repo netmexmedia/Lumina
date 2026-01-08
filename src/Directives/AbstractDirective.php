@@ -29,6 +29,18 @@ abstract class AbstractDirective implements DirectiveInterface
     public ScalarTypeDefinitionNode|ScalarTypeExtensionNode|ObjectTypeDefinitionNode|ObjectTypeExtensionNode|InterfaceTypeDefinitionNode|InterfaceTypeExtensionNode|UnionTypeDefinitionNode|UnionTypeExtensionNode|EnumTypeDefinitionNode|EnumTypeExtensionNode|InputObjectTypeDefinitionNode|InputObjectTypeExtensionNode|FieldDefinitionNode|InputValueDefinitionNode|EnumValueDefinitionNode $definitionNode;
     public array $directiveArguments;
 
+    private ?string $model;
+
+    public function setModel(?string $model): void
+    {
+        $this->model = $model;
+    }
+
+    public function getModel(): ?string
+    {
+        return $this->model;
+    }
+
     public static function name(): string
     {
         return static::class;
@@ -53,6 +65,14 @@ abstract class AbstractDirective implements DirectiveInterface
     public function getDirectiveArgument(string $key, $default = null)
     {
         return $this->directiveArguments[$key] ?? $default;
+    }
+
+    protected function getNamedTypeName($typeNode): string
+    {
+        while (!$typeNode instanceof NamedTypeNode) {
+            $typeNode = $typeNode->type;
+        }
+        return $typeNode->name->value;
     }
 
 }

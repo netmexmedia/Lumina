@@ -8,6 +8,10 @@ use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\InputObjectTypeDefinitionNode;
 use GraphQL\Language\AST\InputValueDefinitionNode;
+use GraphQL\Language\AST\NamedTypeNode;
+use GraphQL\Language\AST\NameNode;
+use GraphQL\Language\AST\NodeList;
+use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use GraphQL\Language\AST\TypeDefinitionNode;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
@@ -120,7 +124,14 @@ final class IntentCompiler
             );
 
             if ($directive instanceof FieldResolverInterface) {
+
+                $directive->setModel($this->getNamedType($fieldNode->type));
                 $intent->setResolver($directive);
+
+                // Ask the directive if it wants to modify the AST / field type
+                if (method_exists($directive, 'modifyFieldType')) {
+                    $directive->modifyFieldType($fieldNode, $this->schemaSource->getDocument());
+                }
             }
 
             if ($directive instanceof FieldArgumentDirectiveInterface) {
@@ -132,6 +143,8 @@ final class IntentCompiler
                 );
             }
         }
+
+
     }
 
     private function applyArgumentDirectives(Intent $intent, InputValueDefinitionNode $argNode): void
