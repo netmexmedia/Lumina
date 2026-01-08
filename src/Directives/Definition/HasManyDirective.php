@@ -40,7 +40,6 @@ class HasManyDirective extends AbstractDirective implements ArgumentBuilderDirec
             ));
         }
 
-
         $alias = $relation . '_alias';
 
         $queryBuilder->innerJoin("$rootAlias.$relation", $alias)

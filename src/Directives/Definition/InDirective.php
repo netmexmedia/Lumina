@@ -26,6 +26,10 @@ class InDirective extends AbstractDirective implements ArgumentBuilderDirectiveI
 
     public function handleArgumentBuilder(QueryBuilder $queryBuilder, $value): QueryBuilder
     {
+        if ($value === null) {
+            return $queryBuilder;
+        }
+
         $column = $this->nodeName();
         $param = ':' . $column . '_param';
 
