@@ -29,17 +29,15 @@ readonly class Kernel
 
     public function execute(GraphQLRequest $request): ExecutionResult
     {
-        $schema = $this->schemaSourceRegistry->schema();
-        $context = $this->contextBuilder->build();
-
+        $this->schemaSourceRegistry->buildDocumentFromSdl();
         $this->intentCompiler->compile();
         $this->fieldResolverCompiler->compile();
 
         $result = GraphQL::executeQuery(
-            schema: $schema,
+            schema: $this->schemaSourceRegistry->getSchema(),
             source: $request->query,
             rootValue: null,
-            contextValue: $context,
+            contextValue: $this->contextBuilder->build(),
             variableValues: $request->variables,
             operationName: $request->operationName,
             fieldResolver: null,

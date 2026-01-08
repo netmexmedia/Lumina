@@ -5,13 +5,19 @@ declare(strict_types=1);
 namespace Netmex\Lumina\Directives\Definition;
 
 use Doctrine\ORM\QueryBuilder;
+use GraphQL\Language\AST\InputValueDefinitionNode;
+use GraphQL\Language\AST\NamedTypeNode;
+use GraphQL\Language\AST\NameNode;
+use GraphQL\Language\AST\NodeList;
 use GraphQL\Type\Definition\ResolveInfo;
 use Netmex\Lumina\Context\Context;
+use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
+use Netmex\Lumina\Contracts\FieldInputDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Contracts\FieldValueInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
 
-final class PaginateDirective extends AbstractDirective implements FieldResolverInterface
+final class PaginateDirective extends AbstractDirective implements FieldResolverInterface, FieldArgumentDirectiveInterface, FieldInputDirectiveInterface
 {
     public static function name(): string
     {
@@ -22,10 +28,20 @@ final class PaginateDirective extends AbstractDirective implements FieldResolver
     {
         return <<<'GRAPHQL'
             directive @paginate(
-                model: String,
-                resolver: String,,
-                limit: Int = 100,
+                model: String
+                resolver: String
+                limit: Int = 100
             ) on FIELD_DEFINITION
+        GRAPHQL;
+    }
+
+    public static function inputsDefinition(): string
+    {
+        return <<<'GRAPHQL'
+            input PaginateInput {
+                page: Int
+                limit: Int
+            }
         GRAPHQL;
     }
 
@@ -42,5 +58,20 @@ final class PaginateDirective extends AbstractDirective implements FieldResolver
 
             return $queryBuilder->getQuery()->getArrayResult();
         };
+    }
+
+    public function argumentNodes(): array
+    {
+        return [
+            new InputValueDefinitionNode([
+                'name' => new NameNode(['value' => 'input']),
+                'type' => new NamedTypeNode([
+                    'name' => new NameNode(['value' => 'PaginateInput'])
+                ]),
+                'directives' => new NodeList([]), // initialize empty list
+                'description' => null,
+                'defaultValue' => null,
+            ])
+        ];
     }
 }

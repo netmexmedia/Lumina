@@ -10,15 +10,43 @@ use GraphQL\Type\Schema;
 use GraphQL\Utils\BuildSchema;
 use Netmex\Lumina\Contracts\SchemaSourceInterface;
 
-final readonly class SchemaSourceRegistry implements SchemaSourceInterface
+final class SchemaSourceRegistry implements SchemaSourceInterface
 {
     /** @param SchemaSourceInterface[] $sources */
     private array $sources;
-    private ?Schema $schema;
-    private DocumentNode $document;
+    private ?Schema $schema = null;
+    private ?DocumentNode $document = null; // <- nullable now
 
     public function __construct(array $sources) {
         $this->sources = $sources;
+    }
+
+    public function getSchema(): ?Schema
+    {
+        return $this->schema;
+    }
+
+    public function buildSchemaFromSdl(): Schema
+    {
+        $this->schema = BuildSchema::build($this->load());
+        return $this->schema;
+    }
+
+    public function getDocument(): ?DocumentNode
+    {
+        return $this->document;
+    }
+
+    public function setDocument(DocumentNode $document): void
+    {
+        $this->document = $document;
+        $this->schema = BuildSchema::buildAST($document);
+    }
+
+    public function buildDocumentFromSdl(): DocumentNode
+    {
+        $this->document = Parser::parse($this->load());
+        return $this->document;
     }
 
     public function load(): string
@@ -27,15 +55,5 @@ final readonly class SchemaSourceRegistry implements SchemaSourceInterface
             static fn (SchemaSourceInterface $source) => $source->load(),
             $this->sources
         ));
-    }
-
-    public function schema(): Schema
-    {
-        return $this->schema ??= BuildSchema::build($this->load());
-    }
-
-    public function document(): DocumentNode
-    {
-        return $this->document ??= Parser::parse($this->load());
     }
 }

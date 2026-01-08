@@ -24,7 +24,8 @@ final readonly class FieldResolverCompiler
 
     public function compile(): void
     {
-        $schema = $this->schemaSource->schema();
+        $schema = $this->schemaSource->getSchema();
+
         $this->compileType($schema->getQueryType(), 'Query');
         $this->compileType($schema->getMutationType(), 'Mutation');
     }

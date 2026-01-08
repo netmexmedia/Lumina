@@ -10,6 +10,7 @@ use GraphQL\Language\AST\InputObjectTypeDefinitionNode;
 use GraphQL\Language\AST\InputValueDefinitionNode;
 use GraphQL\Language\AST\TypeDefinitionNode;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
+use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Contracts\SchemaSourceInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
@@ -40,7 +41,7 @@ final class IntentCompiler
 
     public function compile(): IntentRegistry
     {
-        $document = $this->schemaSource->document();
+        $document = $this->schemaSource->getDocument();
 
         // Register all input types
         foreach ($document->definitions as $def) {
@@ -54,6 +55,11 @@ final class IntentCompiler
             if ($def instanceof TypeDefinitionNode) {
                 $this->compileType($def);
             }
+        }
+
+        // Update the schema source with the parsed document if supported
+        if (method_exists($this->schemaSource, 'setDocument')) {
+            $this->schemaSource->setDocument($document);
         }
 
         return $this->intentRegistry;
@@ -107,6 +113,34 @@ final class IntentCompiler
         }
     }
 
+    private function applyTypeDirectivesToIntent(Intent $intent, array $typeDirectives): void
+    {
+        foreach ($typeDirectives as $directive) {
+            $intent->applyTypeDirective($directive->name(), $directive);
+        }
+    }
+
+    private function applyFieldDirectives(Intent $intent, FieldDefinitionNode $fieldNode): void
+    {
+        foreach ($fieldNode->directives as $directiveNode) {
+            $directive = $this->instantiateDirective(
+                $directiveNode->name->value,
+                $fieldNode,
+                $directiveNode
+            );
+
+            if ($directive instanceof FieldResolverInterface) {
+                $intent->setResolver($directive);
+            }
+
+            if ($directive instanceof FieldArgumentDirectiveInterface) {
+                foreach ($directive->argumentNodes() as $argNode) {
+                    $fieldNode->arguments[] = $argNode;
+                }
+            }
+        }
+    }
+
     private function getNamedType(object $typeNode): string
     {
         if (property_exists($typeNode, 'name') && $typeNode->name !== null) {
@@ -131,28 +165,6 @@ final class IntentCompiler
             );
         }
         return $directives;
-    }
-
-    private function applyTypeDirectivesToIntent(Intent $intent, array $typeDirectives): void
-    {
-        foreach ($typeDirectives as $directive) {
-            $intent->applyTypeDirective($directive->name(), $directive);
-        }
-    }
-
-    private function applyFieldDirectives(Intent $intent, FieldDefinitionNode $fieldNode): void
-    {
-        foreach ($fieldNode->directives as $directiveNode) {
-            $directive = $this->instantiateDirective(
-                $directiveNode->name->value,
-                $fieldNode,
-                $directiveNode
-            );
-
-            if ($directive instanceof FieldResolverInterface) {
-                $intent->setResolver($directive);
-            }
-        }
     }
 
     private function instantiateDirective(string $name, object $definitionNode, object $directiveNode): AbstractDirective
