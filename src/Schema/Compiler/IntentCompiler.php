@@ -24,19 +24,19 @@ final class IntentCompiler
     private DirectiveRegistry $directives;
     private IntentRegistry $intentRegistry;
     private SchemaSourceInterface $schemaSource;
-    private ServiceLocator $serviceLocator;
+    private ServiceLocator $directiveLocator;
     private array $inputTypes = [];
 
     public function __construct(
         DirectiveRegistry $directives,
         IntentRegistry $intentRegistry,
         SchemaSourceInterface $schemaSource,
-        ServiceLocator $serviceLocator
+        ServiceLocator $directiveLocator
     ) {
         $this->directives = $directives;
         $this->intentRegistry = $intentRegistry;
         $this->schemaSource = $schemaSource;
-        $this->serviceLocator = $serviceLocator;
+        $this->directiveLocator = $directiveLocator;
     }
 
     public function compile(): IntentRegistry
@@ -169,7 +169,7 @@ final class IntentCompiler
 
     private function instantiateDirective(string $name, object $definitionNode, object $directiveNode): AbstractDirective
     {
-        $directive = clone $this->serviceLocator->get($this->directives->get($name));
+        $directive = clone $this->directiveLocator->get($this->directives->get($name));
         $directive->directiveNode = $directiveNode;
         $directive->definitionNode = $definitionNode;
         return $directive;

@@ -2,15 +2,9 @@ services:
   _defaults:
     autowire: true
     autoconfigure: true
+    bind:
+      $directiveLocator: !tagged_locator lumina.directive
 
   Netmex\Lumina\:
     resource: '../src/*'
 
-  Netmex\Lumina\Schema\Compiler\IntentCompiler:
-    arguments:
-      $serviceLocator: !tagged_locator lumina.directive
-
-
-  Netmex\Lumina\Schema\AST\ASTMutator:
-    arguments:
-      $serviceLocator: !tagged_locator lumina.directive
