@@ -2,9 +2,10 @@ services:
   _defaults:
     autowire: true
     autoconfigure: true
-
-  Netmex\Lumina\Directives\Definition\:
-    resource: '../src/Directives/Definition/*'
     tags:
       - { name: lumina.schema_sdl }
       - { name: lumina.directive }
+
+  # Automatically register all directive definitions
+  Netmex\Lumina\Directives\Definition\:
+    resource: '../src/Directives/Definition/*'

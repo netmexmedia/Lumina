@@ -35,6 +35,7 @@ final class PaginateDirective extends AbstractDirective implements FieldResolver
         GRAPHQL;
     }
 
+    // Might do a AST mutator to add this input globally
     public static function inputsDefinition(): string
     {
         return <<<'GRAPHQL'
@@ -68,7 +69,7 @@ final class PaginateDirective extends AbstractDirective implements FieldResolver
                 'type' => new NamedTypeNode([
                     'name' => new NameNode(['value' => 'PaginateInput'])
                 ]),
-                'directives' => new NodeList([]), // initialize empty list
+                'directives' => new NodeList([]), // initialize empty
                 'description' => null,
                 'defaultValue' => null,
             ])
