@@ -42,7 +42,8 @@ class BelongsToDirective extends AbstractDirective implements ArgumentBuilderDir
         $alias = $relation . '_alias';
 
         $queryBuilder->innerJoin("$rootAlias.$relation", $alias)
-            ->addSelect($alias);
+            ->addSelect($alias)
+            ->distinct();
 
         return $queryBuilder;
     }
