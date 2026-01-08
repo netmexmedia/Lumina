@@ -50,8 +50,8 @@ final class PaginateDirective extends AbstractDirective implements FieldResolver
     {
         return static function (mixed $root, array $arguments, Context $context, ResolveInfo $info) use ($queryBuilder)
         {
-            $page = max(1, $arguments['page'] ?? 1);
-            $limit = max(1, $arguments['limit'] ?? 10);
+            $page = max(1, $arguments['input']['page'] ?? 1);
+            $limit = max(1, $arguments['input']['limit'] ?? 10);
             $offset = ($page - 1) * $limit;
 
             $queryBuilder->setFirstResult($offset);

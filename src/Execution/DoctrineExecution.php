@@ -36,7 +36,7 @@ class DoctrineExecution implements ExecutionInterface
         return $this->executeResolver($intent, $queryBuilder, $arguments, $context, $info);
     }
 
-    private function getIntent(string $parentTypeName, FieldDefinition $field)
+    private function getIntent(string $parentTypeName, FieldDefinition $field): Intent
     {
         $intent = $this->intentRegistry->get($parentTypeName, $field->name);
 
