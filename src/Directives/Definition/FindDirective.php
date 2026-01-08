@@ -9,6 +9,7 @@ use GraphQL\Language\AST\InputValueDefinitionNode;
 use GraphQL\Language\AST\NamedTypeNode;
 use GraphQL\Language\AST\NameNode;
 use GraphQL\Language\AST\NodeList;
+use GraphQL\Language\AST\NonNullTypeNode;
 use GraphQL\Type\Definition\ResolveInfo;
 use Netmex\Lumina\Context\Context;
 use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
@@ -47,8 +48,10 @@ final class FindDirective extends AbstractDirective implements FieldResolverInte
         return [
             new InputValueDefinitionNode([
                 'name' => new NameNode(['value' => 'id']),
-                'type' => new NamedTypeNode([
-                    'name' => new NameNode(['value' => 'Int'])
+                'type' => new NonNullTypeNode([
+                    'type' => new NamedTypeNode([
+                        'name' => new NameNode(['value' => 'ID']),
+                    ]),
                 ]),
                 'directives' => new NodeList([]),
                 'description' => null,

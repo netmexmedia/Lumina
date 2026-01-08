@@ -24,10 +24,16 @@ final class LikeDirective extends AbstractDirective implements ArgumentBuilderDi
 
     public function handleArgumentBuilder(QueryBuilder $queryBuilder, $value): QueryBuilder
     {
+        if ($value === null) {
+            return $queryBuilder;
+        }
+
         $column = $this->nodeName();
         $param = ':' . $column."_param";
 
-        $queryBuilder->andWhere("e.$column LIKE $param")
+        $alias = current($queryBuilder->getRootAliases());
+
+        $queryBuilder->andWhere("$alias.$column LIKE $param")
             ->setParameter($param, "%$value%");
 
         return $queryBuilder;
