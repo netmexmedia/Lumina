@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Netmex\Lumina\Directives;
 
+use Doctrine\ORM\EntityManagerInterface;
 use GraphQL\Language\AST\DirectiveNode;
 use GraphQL\Language\AST\EnumTypeDefinitionNode;
 use GraphQL\Language\AST\EnumTypeExtensionNode;
@@ -75,4 +76,14 @@ abstract class AbstractDirective implements DirectiveInterface
         return $typeNode->name->value;
     }
 
+    protected function resolveEntityFQCN(string $shortName, EntityManagerInterface $entityManager): ?string
+    {
+        foreach ($entityManager->getMetadataFactory()->getAllMetadata() as $meta) {
+            if ($meta->getReflectionClass()->getShortName() === $shortName) {
+                return $meta->getName(); // return FQCN
+            }
+        }
+
+        return null;
+    }
 }
