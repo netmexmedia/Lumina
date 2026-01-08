@@ -98,6 +98,10 @@ final class IntentCompiler
 
             $this->applyFieldDirectives($intent, $fieldNode);
 
+            // --- NEW: traverse return type for nested field directives like @hasMany
+            $returnTypeName = $this->getNamedType($fieldNode->type);
+            $this->traverseReturnTypeFields($intent, $returnTypeName);
+
             $this->intentRegistry->add($intent);
         }
     }
@@ -143,8 +147,6 @@ final class IntentCompiler
                 );
             }
         }
-
-
     }
 
     private function applyArgumentDirectives(Intent $intent, InputValueDefinitionNode $argNode): void
@@ -186,6 +188,44 @@ final class IntentCompiler
         foreach ($this->inputTypes[$namedType]->fields as $nestedArg) {
             $this->applyArgumentDirectivesRecursive($intent, $nestedArg, $path);
         }
+    }
+
+    private function traverseReturnTypeFields(Intent $intent, string $typeName, string $prefix = ''): void
+    {
+        $typeDef = $this->getObjectTypeDefinition($typeName);
+        if (!$typeDef) {
+            return;
+        }
+
+        foreach ($typeDef->fields as $fieldNode) {
+            $fieldPath = $prefix === '' ? $fieldNode->name->value : $prefix . '.' . $fieldNode->name->value;
+
+            foreach ($fieldNode->directives as $directiveNode) {
+                $directive = $this->instantiateDirective(
+                    $directiveNode->name->value,
+                    $fieldNode,
+                    $directiveNode
+                );
+
+                if ($directive instanceof ArgumentBuilderDirectiveInterface) {
+                    $intent->addArgumentDirective($fieldPath, $directive);
+                }
+            }
+
+            $nestedType = $this->getNamedType($fieldNode->type);
+            $this->traverseReturnTypeFields($intent, $nestedType, $fieldPath);
+        }
+    }
+
+    private function getObjectTypeDefinition(string $typeName): ?ObjectTypeDefinitionNode
+    {
+        $document = $this->schemaSource->getDocument();
+        foreach ($document->definitions as $def) {
+            if ($def instanceof ObjectTypeDefinitionNode && $def->name->value === $typeName) {
+                return $def;
+            }
+        }
+        return null;
     }
 
     private function buildArgumentPath(InputValueDefinitionNode $argNode, string $parentPath): string

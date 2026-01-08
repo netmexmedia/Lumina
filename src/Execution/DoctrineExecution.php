@@ -31,7 +31,6 @@ class DoctrineExecution implements ExecutionInterface
 
         $queryBuilder = $this->createQueryBuilder($intent->resolverDirective->getModel());
 
-
         $this->applyTypeDirectives($intent, $queryBuilder, $arguments);
         $this->applyArgumentDirectives($intent, $queryBuilder, $arguments);
 
@@ -62,9 +61,9 @@ class DoctrineExecution implements ExecutionInterface
     {
         foreach ($intent->argumentDirectives as $argName => $directives) {
             $value = $this->getNestedValue($arguments, $argName);
-            if ($value === null) {
-                continue;
-            }
+//            if ($value === null) {
+//                continue;
+//            }
 
             foreach ($directives as $directive) {
                 $directive->handleArgumentBuilder($queryBuilder, $value);
