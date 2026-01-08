@@ -25,7 +25,7 @@ class DoctrineExecution implements ExecutionInterface
         $this->intentRegistry = $intentRegistry;
     }
 
-    public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info): array
+    public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info): array|int|string|float|bool|null
     {
         $intent = $this->getIntent($parentTypeName, $field);
 
@@ -84,7 +84,7 @@ class DoctrineExecution implements ExecutionInterface
         return $value;
     }
 
-    private function executeResolver(Intent $intent, QueryBuilder $queryBuilder, array $arguments, Context $context, ResolveInfo $info): array
+    private function executeResolver(Intent $intent, QueryBuilder $queryBuilder, array $arguments, Context $context, ResolveInfo $info): array|int|string|float|bool|null
     {
         $resolver = $intent->resolverDirective;
         $callable = $resolver->resolveField(new TestFieldValue(), $queryBuilder);
