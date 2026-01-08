@@ -8,11 +8,8 @@ use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\InputObjectTypeDefinitionNode;
 use GraphQL\Language\AST\InputValueDefinitionNode;
-use GraphQL\Language\AST\NamedTypeNode;
-use GraphQL\Language\AST\NameNode;
-use GraphQL\Language\AST\NodeList;
-use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use GraphQL\Language\AST\TypeDefinitionNode;
+use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
@@ -31,7 +28,12 @@ final class IntentCompiler
     private ServiceLocator $directiveLocator;
     private array $inputTypes = [];
 
-    public function __construct(DirectiveRegistry $directives, IntentRegistry $intentRegistry, SchemaSourceRegistry $schemaSource, ServiceLocator $directiveLocator) {
+    public function __construct(
+        DirectiveRegistry $directives,
+        IntentRegistry $intentRegistry,
+        SchemaSourceRegistry $schemaSource,
+        ServiceLocator $directiveLocator
+    ) {
         $this->directives = $directives;
         $this->intentRegistry = $intentRegistry;
         $this->schemaSource = $schemaSource;
@@ -42,7 +44,7 @@ final class IntentCompiler
     {
         $document = $this->schemaSource->getDocument();
 
-        if ($document === null) {
+        if (!$document) {
             throw new \RuntimeException('Schema document is missing from schema source.');
         }
 
@@ -52,6 +54,10 @@ final class IntentCompiler
 
         return $this->intentRegistry;
     }
+
+    // ---------------------------------------------
+    // Document & Type Level
+    // ---------------------------------------------
 
     private function indexInputTypes(DocumentNode $document): void
     {
@@ -91,16 +97,7 @@ final class IntentCompiler
             $intent = new Intent($typeName, $fieldNode->name->value);
 
             $this->applyTypeDirectivesToIntent($intent, $typeDirectives);
-
-            foreach ($fieldNode->arguments as $argNode) {
-                $this->applyArgumentDirectives($intent, $argNode);
-            }
-
-            $this->applyFieldDirectives($intent, $fieldNode);
-
-            // --- NEW: traverse return type for nested field directives like @hasMany
-            $returnTypeName = $this->getNamedType($fieldNode->type);
-            $this->traverseReturnTypeFields($intent, $returnTypeName);
+            $this->compileField($intent, $fieldNode);
 
             $this->intentRegistry->add($intent);
         }
@@ -113,13 +110,29 @@ final class IntentCompiler
         }
     }
 
-    private function applyFieldDirectives(Intent $intent, FieldDefinitionNode $fieldNode): void
+    // ---------------------------------------------
+    // Field Level
+    // ---------------------------------------------
+
+    private function compileField(Intent $intent, FieldDefinitionNode $fieldNode): void
     {
         $existingArgs = [];
         foreach ($fieldNode->arguments as $argNode) {
             $existingArgs[$argNode->name->value] = true;
         }
 
+        $this->applyFieldDirectives($intent, $fieldNode, $existingArgs);
+
+        foreach ($fieldNode->arguments as $argNode) {
+            $this->compileInputArgument($intent, $argNode);
+        }
+
+        $returnTypeName = $this->getNamedType($fieldNode->type);
+        $this->traverseReturnTypeFields($intent, $returnTypeName);
+    }
+
+    private function applyFieldDirectives(Intent $intent, FieldDefinitionNode $fieldNode, array &$existingArgs): void
+    {
         foreach ($fieldNode->directives as $directiveNode) {
             $directive = $this->instantiateDirective(
                 $directiveNode->name->value,
@@ -128,18 +141,15 @@ final class IntentCompiler
             );
 
             if ($directive instanceof FieldResolverInterface) {
-
                 $directive->setModel($this->getNamedType($fieldNode->type));
                 $intent->setResolver($directive);
 
-                // Ask the directive if it wants to modify the AST / field type
                 if (method_exists($directive, 'modifyFieldType')) {
                     $directive->modifyFieldType($fieldNode, $this->schemaSource->getDocument());
                 }
             }
 
-            if (($directive instanceof ArgumentBuilderDirectiveInterface)) {
-
+            if ($directive instanceof ArgumentBuilderDirectiveInterface) {
                 if ($directive instanceof FieldArgumentDirectiveInterface) {
                     foreach ($directive->argumentNodes() as $argNode) {
                         $intent->addArgumentDirective($argNode->name->value, $directive);
@@ -150,27 +160,27 @@ final class IntentCompiler
             }
 
             if ($directive instanceof FieldArgumentDirectiveInterface) {
-                $this->injectDirectiveArguments(
-                    $fieldNode,
-                    $directive,
-                    $directiveNode,
-                    $existingArgs
-                );
+                $this->injectDirectiveArguments($fieldNode, $directive, $directiveNode, $existingArgs);
             }
         }
     }
 
-    private function applyArgumentDirectives(Intent $intent, InputValueDefinitionNode $argNode): void
-    {
-        $this->applyArgumentDirectivesRecursive($intent, $argNode);
-    }
+    // ---------------------------------------------
+    // Input Argument Level (recursive)
+    // ---------------------------------------------
 
-    private function applyArgumentDirectivesRecursive(Intent $intent, InputValueDefinitionNode $argNode, string $path = ''): void
+    private function compileInputArgument(Intent $intent, InputValueDefinitionNode $argNode, string $parentPath = ''): void
     {
-        $argPath = $this->buildArgumentPath($argNode, $path);
+        $argPath = $this->buildArgumentPath($argNode, $parentPath);
 
         $this->applyArgumentNodeDirectives($intent, $argNode, $argPath);
-        $this->traverseNestedInputArguments($intent, $argNode, $argPath);
+
+        $namedType = $this->getNamedType($argNode->type);
+        if (isset($this->inputTypes[$namedType])) {
+            foreach ($this->inputTypes[$namedType]->fields as $nestedArg) {
+                $this->compileInputArgument($intent, $nestedArg, $argPath);
+            }
+        }
     }
 
     private function applyArgumentNodeDirectives(Intent $intent, InputValueDefinitionNode $argNode, string $argPath): void
@@ -188,18 +198,9 @@ final class IntentCompiler
         }
     }
 
-    private function traverseNestedInputArguments(Intent $intent, InputValueDefinitionNode $argNode, string $path): void
-    {
-        $namedType = $this->getNamedType($argNode->type);
-
-        if (!isset($this->inputTypes[$namedType])) {
-            return;
-        }
-
-        foreach ($this->inputTypes[$namedType]->fields as $nestedArg) {
-            $this->applyArgumentDirectivesRecursive($intent, $nestedArg, $path);
-        }
-    }
+    // ---------------------------------------------
+    // Return Type Traversal
+    // ---------------------------------------------
 
     private function traverseReturnTypeFields(Intent $intent, string $typeName, string $prefix = ''): void
     {
@@ -228,6 +229,10 @@ final class IntentCompiler
         }
     }
 
+    // ---------------------------------------------
+    // Utilities
+    // ---------------------------------------------
+
     private function getObjectTypeDefinition(string $typeName): ?ObjectTypeDefinitionNode
     {
         $document = $this->schemaSource->getDocument();
@@ -241,11 +246,7 @@ final class IntentCompiler
 
     private function buildArgumentPath(InputValueDefinitionNode $argNode, string $parentPath): string
     {
-        if ($parentPath === '') {
-            return $argNode->name->value;
-        }
-
-        return $parentPath . '.' . $argNode->name->value;
+        return $parentPath === '' ? $argNode->name->value : $parentPath . '.' . $argNode->name->value;
     }
 
     private function injectDirectiveArguments(FieldDefinitionNode $fieldNode, FieldArgumentDirectiveInterface $directive, object $directiveNode, array &$existingArgs): void
