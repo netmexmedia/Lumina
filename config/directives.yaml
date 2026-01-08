@@ -5,6 +5,8 @@ services:
     tags:
       - { name: lumina.schema_sdl }
       - { name: lumina.directive }
+    bind:
+      $userColumn: '%lumina.user_column%'
 
   # Automatically register all directive definitions
   Netmex\Lumina\Directives\Definition\:

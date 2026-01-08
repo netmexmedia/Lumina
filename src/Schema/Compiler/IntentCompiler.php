@@ -138,9 +138,14 @@ final class IntentCompiler
                 }
             }
 
-            if (($directive instanceof ArgumentBuilderDirectiveInterface) && $directive instanceof FieldArgumentDirectiveInterface) {
-                foreach ($directive->argumentNodes() as $argNode) {
-                    $intent->addArgumentDirective($argNode->name->value, $directive);
+            if (($directive instanceof ArgumentBuilderDirectiveInterface)) {
+
+                if ($directive instanceof FieldArgumentDirectiveInterface) {
+                    foreach ($directive->argumentNodes() as $argNode) {
+                        $intent->addArgumentDirective($argNode->name->value, $directive);
+                    }
+                } else {
+                    $intent->addArgumentDirective($directiveNode->name->value, $directive);
                 }
             }
 

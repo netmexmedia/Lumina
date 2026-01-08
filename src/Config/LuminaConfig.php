@@ -16,6 +16,10 @@ final class LuminaConfig
                     ->defaultValue('/graphql')
                     ->cannotBeEmpty()
                 ->end()
+                ->scalarNode('user_column')
+                    ->defaultValue('user_id')
+                    ->cannotBeEmpty()
+                ->end()
             ->end();
     }
 }

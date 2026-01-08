@@ -43,6 +43,7 @@ class LuminaBundle extends AbstractBundle
         // $container->import(__DIR__ . '/../config/graphql.yaml');
 
         $container->parameters()->set('lumina.endpoint', $config['endpoint']);
+        $container->parameters()->set('lumina.user_column', $config['user_column']);
         $container->parameters()->set(
             'lumina.schema.directory',
             $config['schema']['directory']
