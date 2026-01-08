@@ -9,3 +9,8 @@ services:
   Netmex\Lumina\Schema\Compiler\IntentCompiler:
     arguments:
       $serviceLocator: !tagged_locator lumina.directive
+
+
+  Netmex\Lumina\Schema\AST\ASTMutator:
+    arguments:
+      $serviceLocator: !tagged_locator lumina.directive
