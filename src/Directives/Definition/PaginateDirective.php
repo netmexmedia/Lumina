@@ -50,8 +50,8 @@ final class PaginateDirective extends AbstractDirective implements FieldResolver
     {
         return static function (mixed $root, array $arguments, Context $context, ResolveInfo $info) use ($queryBuilder)
         {
-            $page = max(1, $arguments['input']['page'] ?? 1);
-            $limit = max(1, $arguments['input']['limit'] ?? 10);
+            $page = max(1, $arguments['page'] ?? 1);
+            $limit = max(1, $arguments['first'] ?? 10);
             $offset = ($page - 1) * $limit;
 
             $queryBuilder->setFirstResult($offset);
@@ -65,11 +65,20 @@ final class PaginateDirective extends AbstractDirective implements FieldResolver
     {
         return [
             new InputValueDefinitionNode([
-                'name' => new NameNode(['value' => 'input']),
+                'name' => new NameNode(['value' => 'page']),
                 'type' => new NamedTypeNode([
-                    'name' => new NameNode(['value' => 'PaginateInput'])
+                    'name' => new NameNode(['value' => 'Int'])
                 ]),
-                'directives' => new NodeList([]), // initialize empty
+                'directives' => new NodeList([]),
+                'description' => null,
+                'defaultValue' => null,
+            ]),
+            new InputValueDefinitionNode([
+                'name' => new NameNode(['value' => 'first']),
+                'type' => new NamedTypeNode([
+                    'name' => new NameNode(['value' => 'Int'])
+                ]),
+                'directives' => new NodeList([]),
                 'description' => null,
                 'defaultValue' => null,
             ])

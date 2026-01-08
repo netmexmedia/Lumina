@@ -12,27 +12,22 @@ use GraphQL\Language\AST\TypeDefinitionNode;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
-use Netmex\Lumina\Contracts\SchemaSourceInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
 use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Netmex\Lumina\Intent\Intent;
 use Netmex\Lumina\Intent\IntentRegistry;
+use Netmex\Lumina\Schema\Source\SchemaSourceRegistry;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
 final class IntentCompiler
 {
     private DirectiveRegistry $directives;
     private IntentRegistry $intentRegistry;
-    private SchemaSourceInterface $schemaSource;
+    private SchemaSourceRegistry $schemaSource;
     private ServiceLocator $directiveLocator;
     private array $inputTypes = [];
 
-    public function __construct(
-        DirectiveRegistry $directives,
-        IntentRegistry $intentRegistry,
-        SchemaSourceInterface $schemaSource,
-        ServiceLocator $directiveLocator
-    ) {
+    public function __construct(DirectiveRegistry $directives, IntentRegistry $intentRegistry, SchemaSourceRegistry $schemaSource, ServiceLocator $directiveLocator) {
         $this->directives = $directives;
         $this->intentRegistry = $intentRegistry;
         $this->schemaSource = $schemaSource;
@@ -43,26 +38,40 @@ final class IntentCompiler
     {
         $document = $this->schemaSource->getDocument();
 
-        // Register all input types
+        if ($document === null) {
+            throw new \RuntimeException('Schema document is missing from schema source.');
+        }
+
+        $this->indexInputTypes($document);
+        $this->compileTypes($document);
+        $this->finalizeDocument($document);
+
+        return $this->intentRegistry;
+    }
+
+    private function indexInputTypes(DocumentNode $document): void
+    {
         foreach ($document->definitions as $def) {
             if ($def instanceof InputObjectTypeDefinitionNode) {
                 $this->inputTypes[$def->name->value] = $def;
             }
         }
+    }
 
-        // Compile all other types
+    private function compileTypes(DocumentNode $document): void
+    {
         foreach ($document->definitions as $def) {
             if ($def instanceof TypeDefinitionNode) {
                 $this->compileType($def);
             }
         }
+    }
 
-        // Update the schema source with the parsed document if supported
+    private function finalizeDocument(DocumentNode $document): void
+    {
         if (method_exists($this->schemaSource, 'setDocument')) {
             $this->schemaSource->setDocument($document);
         }
-
-        return $this->intentRegistry;
     }
 
     private function compileType(TypeDefinitionNode $typeNode): void
@@ -71,7 +80,9 @@ final class IntentCompiler
         $typeDirectives = $this->collectTypeDirectives($typeNode);
 
         foreach ($typeNode->fields as $fieldNode) {
-            if (!$fieldNode instanceof FieldDefinitionNode) continue;
+            if (!$fieldNode instanceof FieldDefinitionNode) {
+                continue;
+            }
 
             $intent = new Intent($typeName, $fieldNode->name->value);
 
@@ -87,32 +98,6 @@ final class IntentCompiler
         }
     }
 
-    private function applyArgumentDirectives(Intent $intent, InputValueDefinitionNode $argNode, string $path = ''): void
-    {
-        $argName = $path === '' ? $argNode->name->value : $path . '.' . $argNode->name->value;
-
-        foreach ($argNode->directives as $directiveNode) {
-            $directive = $this->instantiateDirective(
-                $directiveNode->name->value,
-                $argNode,
-                $directiveNode
-            );
-
-            if ($directive instanceof ArgumentBuilderDirectiveInterface) {
-                $intent->addArgumentDirective($argName, $directive);
-            }
-        }
-
-        // Handle nested input objects recursively
-        $namedType = $this->getNamedType($argNode->type);
-        if (!isset($this->inputTypes[$namedType])) return;
-
-        $inputObject = $this->inputTypes[$namedType];
-        foreach ($inputObject->fields as $nestedArg) {
-            $this->applyArgumentDirectives($intent, $nestedArg, $argName);
-        }
-    }
-
     private function applyTypeDirectivesToIntent(Intent $intent, array $typeDirectives): void
     {
         foreach ($typeDirectives as $directive) {
@@ -122,6 +107,11 @@ final class IntentCompiler
 
     private function applyFieldDirectives(Intent $intent, FieldDefinitionNode $fieldNode): void
     {
+        $existingArgs = [];
+        foreach ($fieldNode->arguments as $argNode) {
+            $existingArgs[$argNode->name->value] = true;
+        }
+
         foreach ($fieldNode->directives as $directiveNode) {
             $directive = $this->instantiateDirective(
                 $directiveNode->name->value,
@@ -134,10 +124,83 @@ final class IntentCompiler
             }
 
             if ($directive instanceof FieldArgumentDirectiveInterface) {
-                foreach ($directive->argumentNodes() as $argNode) {
-                    $fieldNode->arguments[] = $argNode;
-                }
+                $this->injectDirectiveArguments(
+                    $fieldNode,
+                    $directive,
+                    $directiveNode,
+                    $existingArgs
+                );
             }
+        }
+    }
+
+    private function applyArgumentDirectives(Intent $intent, InputValueDefinitionNode $argNode): void
+    {
+        $this->applyArgumentDirectivesRecursive($intent, $argNode);
+    }
+
+    private function applyArgumentDirectivesRecursive(Intent $intent, InputValueDefinitionNode $argNode, string $path = ''): void
+    {
+        $argPath = $this->buildArgumentPath($argNode, $path);
+
+        $this->applyArgumentNodeDirectives($intent, $argNode, $argPath);
+        $this->traverseNestedInputArguments($intent, $argNode, $argPath);
+    }
+
+    private function applyArgumentNodeDirectives(Intent $intent, InputValueDefinitionNode $argNode, string $argPath): void
+    {
+        foreach ($argNode->directives as $directiveNode) {
+            $directive = $this->instantiateDirective(
+                $directiveNode->name->value,
+                $argNode,
+                $directiveNode
+            );
+
+            if ($directive instanceof ArgumentBuilderDirectiveInterface) {
+                $intent->addArgumentDirective($argPath, $directive);
+            }
+        }
+    }
+
+    private function traverseNestedInputArguments(Intent $intent, InputValueDefinitionNode $argNode, string $path): void
+    {
+        $namedType = $this->getNamedType($argNode->type);
+
+        if (!isset($this->inputTypes[$namedType])) {
+            return;
+        }
+
+        foreach ($this->inputTypes[$namedType]->fields as $nestedArg) {
+            $this->applyArgumentDirectivesRecursive($intent, $nestedArg, $path);
+        }
+    }
+
+    private function buildArgumentPath(InputValueDefinitionNode $argNode, string $parentPath): string
+    {
+        if ($parentPath === '') {
+            return $argNode->name->value;
+        }
+
+        return $parentPath . '.' . $argNode->name->value;
+    }
+
+    private function injectDirectiveArguments(FieldDefinitionNode $fieldNode, FieldArgumentDirectiveInterface $directive, object $directiveNode, array &$existingArgs): void
+    {
+        foreach ($directive->argumentNodes() as $argNode) {
+            $name = $argNode->name->value;
+
+            if (isset($existingArgs[$name])) {
+                throw new \RuntimeException(sprintf(
+                    'Argument "%s" on field "%s" conflicts with a system argument added by @%s. ' .
+                    'Please rename your argument to avoid reserved system names.',
+                    $name,
+                    $fieldNode->name->value,
+                    $directiveNode->name->value
+                ));
+            }
+
+            $fieldNode->arguments[] = $argNode;
+            $existingArgs[$name] = true;
         }
     }
 
