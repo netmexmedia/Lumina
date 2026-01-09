@@ -68,9 +68,9 @@ abstract class AbstractDirective implements DirectiveInterface
         $this->arguments = $arguments;
     }
 
-    public function getArgument(string $name, mixed $default = null): mixed
+    public function getArgument(string|int $index, mixed $default = null): mixed
     {
-        return $this->arguments[$name] ?? $default;
+        return $this->arguments[$index] ?? $default;
     }
 
     public function getArguments(): array

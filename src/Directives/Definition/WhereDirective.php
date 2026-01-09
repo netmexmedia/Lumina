@@ -29,11 +29,11 @@ final class WhereDirective extends AbstractDirective implements ArgumentBuilderD
         if ($value === null) {
             return $queryBuilder;
         }
-
+        $alias = current($queryBuilder->getRootAliases());
         $column = $this->nodeName();
         $param = ':' . $column."_param";
 
-        $queryBuilder->andWhere("e.$column = $param")
+        $queryBuilder->andWhere("$alias.$column = $param")
             ->setParameter($param, $value);
 
         return $queryBuilder;
