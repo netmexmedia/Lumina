@@ -78,6 +78,11 @@ abstract class AbstractDirective implements DirectiveInterface
         return $this->arguments;
     }
 
+    public function getColumn(): string
+    {
+        return $this->getArgument('column', $this->nodeName());
+    }
+
     protected function getNamedTypeName($typeNode): string
     {
         while (!$typeNode instanceof NamedTypeNode) {
