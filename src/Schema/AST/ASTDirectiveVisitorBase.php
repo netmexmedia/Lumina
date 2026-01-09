@@ -1,6 +1,8 @@
 <?php
 
-namespace Netmex\Lumina\Schema;
+declare(strict_types=1);
+
+namespace Netmex\Lumina\Schema\AST;
 
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
@@ -20,15 +22,11 @@ abstract class ASTDirectiveVisitorBase
     public function collectTypeDirectives($typeNode): array
     {
         $directives = [];
+
         foreach ($typeNode->directives as $directiveNode) {
-            $directives[] = $this->instantiateDirective(
-                $directiveNode->name->value,
-                $typeNode,
-                $directiveNode,
-                $this->getDirectiveLocator(),
-                $this->getDirectiveRegistry()
-            );
+            $directives[] = $this->instantiateDirectiveFromNode($directiveNode, $typeNode);
         }
+
         return $directives;
     }
 
@@ -39,74 +37,33 @@ abstract class ASTDirectiveVisitorBase
         }
     }
 
-    public function applyFieldDirectives(
-        Intent $intent,
-        FieldDefinitionNode $fieldNode,
-        array &$existingArgs,
-        DocumentNode $document
-    ): void {
+    public function applyFieldDirectives(Intent $intent, FieldDefinitionNode $fieldNode, array &$existingArgs, DocumentNode $document): void {
         foreach ($fieldNode->directives as $directiveNode) {
-            $directive = $this->instantiateDirective(
-                $directiveNode->name->value,
-                $fieldNode,
-                $directiveNode,
-                $this->getDirectiveLocator(),
-                $this->getDirectiveRegistry()
-            );
+            $directive = $this->instantiateDirectiveFromNode($directiveNode, $fieldNode);
 
-            if ($directive instanceof FieldResolverInterface) {
-                $directive->setModel($this->getNamedType($fieldNode->type));
-                $intent->setResolver($directive);
-
-                if (method_exists($directive, 'modifyFieldType')) {
-                    $directive->modifyFieldType($fieldNode, $document);
-                }
-            }
-
-            if ($directive instanceof ArgumentBuilderDirectiveInterface) {
-                if ($directive instanceof FieldArgumentDirectiveInterface) {
-                    foreach ($directive->argumentNodes() as $argNode) {
-                        $intent->addArgumentDirective($argNode->name->value, $directive);
-                    }
-                } else {
-                    $intent->addArgumentDirective($directiveNode->name->value, $directive);
-                }
-            }
-
-            if ($directive instanceof FieldArgumentDirectiveInterface) {
-                $this->injectDirectiveArguments(
-                    $fieldNode,
-                    $directive,
-                    $directiveNode,
-                    $existingArgs
-                );
-            }
+            $this->applyResolverDirective($intent, $fieldNode, $directive, $document);
+            $this->applyArgumentDirective($intent, $fieldNode, $directive, $directiveNode, $existingArgs);
         }
     }
 
-    protected function instantiateDirective(
-        string $name,
-        object $definitionNode,
-        object $directiveNode,
-        ServiceLocator $locator,
-        DirectiveRegistry $registry
-    ): AbstractDirective {
-        $serviceId = $registry->get($name);
+    protected function instantiateDirectiveFromNode(object $directiveNode, object $definitionNode): AbstractDirective
+    {
+        $serviceId = $this->getDirectiveRegistry()->get($directiveNode->name->value);
 
         if ($serviceId === null) {
             throw new \RuntimeException(sprintf(
-                'Directive "%s" used on %s is not registered. Make sure the directive exists in the DirectiveRegistry.',
-                $name,
+                'Directive "%s" used on %s is not registered.',
+                $directiveNode->name->value,
                 $definitionNode::class
             ));
         }
 
-        $directive = clone $locator->get($serviceId);
+        $directive = clone $this->getDirectiveLocator()->get($serviceId);
 
         if (!$directive instanceof AbstractDirective) {
             throw new \RuntimeException(sprintf(
-                'Directive "%s" retrieved from the ServiceLocator is not an instance of AbstractDirective.',
-                $name
+                'Directive "%s" is not an instance of AbstractDirective.',
+                $directiveNode->name->value
             ));
         }
 
@@ -114,6 +71,37 @@ abstract class ASTDirectiveVisitorBase
         $directive->definitionNode = $definitionNode;
 
         return $directive;
+    }
+
+    private function applyResolverDirective(Intent $intent, FieldDefinitionNode $fieldNode, AbstractDirective $directive, DocumentNode $document): void
+    {
+        if (!($directive instanceof FieldResolverInterface)) {
+            return;
+        }
+
+        $directive->setModel($this->getNamedType($fieldNode->type));
+        $intent->setResolver($directive);
+
+        if (method_exists($directive, 'modifyFieldType')) {
+            $directive->modifyFieldType($fieldNode, $document);
+        }
+    }
+
+    private function applyArgumentDirective(Intent $intent, FieldDefinitionNode $fieldNode, AbstractDirective $directive, object $directiveNode, array &$existingArgs): void
+    {
+        if ($directive instanceof ArgumentBuilderDirectiveInterface) {
+            if ($directive instanceof FieldArgumentDirectiveInterface) {
+                foreach ($directive->argumentNodes() as $argNode) {
+                    $intent->addArgumentDirective($argNode->name->value, $directive);
+                }
+            } else {
+                $intent->addArgumentDirective($directiveNode->name->value, $directive);
+            }
+        }
+
+        if ($directive instanceof FieldArgumentDirectiveInterface) {
+            $this->injectDirectiveArguments($fieldNode, $directive, $directiveNode, $existingArgs);
+        }
     }
 
     protected function getNamedType(object $typeNode): string

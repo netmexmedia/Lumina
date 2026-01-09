@@ -2,26 +2,31 @@
 
 declare(strict_types=1);
 
-namespace Netmex\Lumina\Schema\AST;
+namespace Netmex\Lumina\Schema;
 
 use GraphQL\Language\AST\DocumentNode;
-use GraphQL\Language\AST\TypeDefinitionNode;
 use GraphQL\Language\AST\InputObjectTypeDefinitionNode;
+use GraphQL\Language\AST\TypeDefinitionNode;
 use Netmex\Lumina\Intent\IntentRegistry;
+use Netmex\Lumina\Schema\AST\TypeVisitor;
 use Netmex\Lumina\Schema\Source\SchemaSourceRegistry;
 
 final class SchemaCompiler
 {
+    private SchemaSourceRegistry $schemaSource;
+    private TypeVisitor $typeVisitor;
     private array $inputTypes = [];
 
-    public function __construct(
-        private readonly SchemaSourceRegistry $schemaSource,
-        private readonly TypeVisitor          $typeVisitor
-    ) {}
+    public function __construct(SchemaSourceRegistry $schemaSource, TypeVisitor $typeVisitor)
+    {
+        $this->schemaSource = $schemaSource;
+        $this->typeVisitor = $typeVisitor;
+    }
 
     public function compile(): IntentRegistry
     {
         $document = $this->schemaSource->getDocument();
+
         if (!$document) {
             throw new \RuntimeException('Schema document is missing from schema source.');
         }
