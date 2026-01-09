@@ -90,16 +90,17 @@ final class ArgumentDirectiveVisitor extends AbstractASTDirectiveVisitor
 
     private function applyArgumentNodeDirectives(Intent $intent, InputValueDefinitionNode $argNode, string $argPath): void
     {
+        $existingArgs = [];
+
         foreach ($argNode->directives as $directiveNode) {
             $directive = $this->instantiateDirectiveFromNode($directiveNode, $argNode);
 
             if ($directive instanceof ArgumentBuilderDirectiveInterface) {
-                $intent->addArgumentDirective($argPath, $directive);
+                $intent->addArgumentDirective($directiveNode->name->value, $directive);
             }
 
             if ($directive instanceof FieldArgumentDirectiveInterface) {
-                $existingArgs = [];
-                $this->injectDirectiveArguments($this->fieldDefinitionNode, $directive, $argNode, $existingArgs);
+                $this->injectDirectiveArguments($this->fieldDefinitionNode, $directive, $directiveNode, $existingArgs);
             }
         }
     }
