@@ -7,6 +7,7 @@ namespace Netmex\Lumina\Schema\AST;
 use GraphQL\Language\AST\InputValueDefinitionNode;
 use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
+use Netmex\Lumina\Contracts\DirectiveFactoryInterface;
 use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Netmex\Lumina\Intent\Intent;
 use Symfony\Component\DependencyInjection\ServiceLocator;
@@ -17,8 +18,10 @@ final class ArgumentDirectiveVisitor extends ASTDirectiveVisitorBase
     private DirectiveRegistry $directiveRegistry;
     private ServiceLocator $directiveLocator;
 
-    public function __construct(DirectiveRegistry $directiveRegistry, ServiceLocator $directiveLocator)
+    public function __construct(DirectiveFactoryInterface $directiveFactory, DirectiveRegistry $directiveRegistry, ServiceLocator $directiveLocator)
     {
+        parent::__construct($directiveFactory);
+
         $this->directiveRegistry = $directiveRegistry;
         $this->directiveLocator = $directiveLocator;
     }

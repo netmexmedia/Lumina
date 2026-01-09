@@ -7,18 +7,20 @@ namespace Netmex\Lumina\Schema\AST;
 use GraphQL\Language\AST\TypeDefinitionNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\DocumentNode;
+use Netmex\Lumina\Contracts\IntentFactoryInterface;
 use Netmex\Lumina\Intent\IntentRegistry;
-use Netmex\Lumina\Intent\Intent;
 
 final class TypeVisitor
 {
     private FieldVisitor $fieldVisitor;
     private IntentRegistry $intentRegistry;
+    private IntentFactoryInterface $intentFactory;
 
-    public function __construct(FieldVisitor $fieldVisitor, IntentRegistry $intentRegistry)
+    public function __construct(FieldVisitor $fieldVisitor, IntentRegistry $intentRegistry, IntentFactoryInterface $intentFactory)
     {
         $this->fieldVisitor = $fieldVisitor;
         $this->intentRegistry = $intentRegistry;
+        $this->intentFactory = $intentFactory;
     }
 
     public function visitType(TypeDefinitionNode $typeNode, array $inputTypes, DocumentNode $document): void
@@ -32,7 +34,7 @@ final class TypeVisitor
                 continue;
             }
 
-            $intent = new Intent($typeName, $fieldNode->name->value);
+            $intent = $this->intentFactory->create($typeName, $fieldNode->name->value, $typeDirectives);
 
             $this->fieldVisitor->applyTypeDirectivesToIntent($intent, $typeDirectives);
             $this->fieldVisitor->visitField($intent, $fieldNode, $inputTypes, $document);

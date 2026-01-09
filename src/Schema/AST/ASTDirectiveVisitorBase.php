@@ -6,7 +6,11 @@ namespace Netmex\Lumina\Schema\AST;
 
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
+use GraphQL\Language\AST\ListValueNode;
+use GraphQL\Language\AST\ObjectValueNode;
+use GraphQL\Language\AST\ValueNode;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
+use Netmex\Lumina\Contracts\DirectiveFactoryInterface;
 use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
@@ -18,6 +22,12 @@ abstract class ASTDirectiveVisitorBase
 {
     abstract protected function getDirectiveLocator(): ServiceLocator;
     abstract protected function getDirectiveRegistry(): DirectiveRegistry;
+    protected DirectiveFactoryInterface $directiveFactory;
+
+    public function __construct(DirectiveFactoryInterface $directiveFactory)
+    {
+        $this->directiveFactory = $directiveFactory;
+    }
 
     public function collectTypeDirectives($typeNode): array
     {
@@ -48,29 +58,7 @@ abstract class ASTDirectiveVisitorBase
 
     protected function instantiateDirectiveFromNode(object $directiveNode, object $definitionNode): AbstractDirective
     {
-        $serviceId = $this->getDirectiveRegistry()->get($directiveNode->name->value);
-
-        if ($serviceId === null) {
-            throw new \RuntimeException(sprintf(
-                'Directive "%s" used on %s is not registered.',
-                $directiveNode->name->value,
-                $definitionNode::class
-            ));
-        }
-
-        $directive = clone $this->getDirectiveLocator()->get($serviceId);
-
-        if (!$directive instanceof AbstractDirective) {
-            throw new \RuntimeException(sprintf(
-                'Directive "%s" is not an instance of AbstractDirective.',
-                $directiveNode->name->value
-            ));
-        }
-
-        $directive->directiveNode = $directiveNode;
-        $directive->definitionNode = $definitionNode;
-
-        return $directive;
+        return $this->directiveFactory->create($directiveNode, $definitionNode);
     }
 
     private function applyResolverDirective(Intent $intent, FieldDefinitionNode $fieldNode, AbstractDirective $directive, DocumentNode $document): void

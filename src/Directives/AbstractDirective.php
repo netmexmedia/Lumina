@@ -28,7 +28,7 @@ abstract class AbstractDirective implements DirectiveInterface
 {
     public DirectiveNode $directiveNode;
     public ScalarTypeDefinitionNode|ScalarTypeExtensionNode|ObjectTypeDefinitionNode|ObjectTypeExtensionNode|InterfaceTypeDefinitionNode|InterfaceTypeExtensionNode|UnionTypeDefinitionNode|UnionTypeExtensionNode|EnumTypeDefinitionNode|EnumTypeExtensionNode|InputObjectTypeDefinitionNode|InputObjectTypeExtensionNode|FieldDefinitionNode|InputValueDefinitionNode|EnumValueDefinitionNode $definitionNode;
-    public array $directiveArguments;
+    protected array $arguments = [];
 
     private ?string $model;
 
@@ -63,9 +63,19 @@ abstract class AbstractDirective implements DirectiveInterface
         return $type->name->value;
     }
 
-    public function getDirectiveArgument(string $key, $default = null)
+    public function setArguments(array $arguments): void
     {
-        return $this->directiveArguments[$key] ?? $default;
+        $this->arguments = $arguments;
+    }
+
+    public function getArgument(string $name, mixed $default = null): mixed
+    {
+        return $this->arguments[$name] ?? $default;
+    }
+
+    public function getArguments(): array
+    {
+        return $this->arguments;
     }
 
     protected function getNamedTypeName($typeNode): string
@@ -80,7 +90,7 @@ abstract class AbstractDirective implements DirectiveInterface
     {
         foreach ($entityManager->getMetadataFactory()->getAllMetadata() as $meta) {
             if ($meta->getReflectionClass()->getShortName() === $shortName) {
-                return $meta->getName(); // return FQCN
+                return $meta->getName();
             }
         }
 

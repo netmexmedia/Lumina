@@ -6,6 +6,7 @@ namespace Netmex\Lumina\Schema\AST;
 
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
+use Netmex\Lumina\Contracts\DirectiveFactoryInterface;
 use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Netmex\Lumina\Intent\Intent;
 use Symfony\Component\DependencyInjection\ServiceLocator;
@@ -14,8 +15,9 @@ final class FieldVisitor extends ASTDirectiveVisitorBase
 {
     private ArgumentDirectiveVisitor $argumentVisitor;
 
-    public function __construct(ArgumentDirectiveVisitor $argumentVisitor)
+    public function __construct(DirectiveFactoryInterface $directiveFactory, ArgumentDirectiveVisitor $argumentVisitor)
     {
+        parent::__construct($directiveFactory);
         $this->argumentVisitor = $argumentVisitor;
     }
 
