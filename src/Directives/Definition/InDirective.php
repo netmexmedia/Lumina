@@ -30,7 +30,7 @@ class InDirective extends AbstractDirective implements ArgumentBuilderDirectiveI
         }
 
         $alias = current($queryBuilder->getRootAliases());
-        $columns = $this->getArgument('columns') ?? [$this->nodeName()];
+        $columns = $this->getArgument('columns') ?? [$this->getColumn()];
         $exact = $this->getArgument('exact') ?? true;
 
         $orX = $queryBuilder->expr()->orX();
