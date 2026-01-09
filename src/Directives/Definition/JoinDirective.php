@@ -16,9 +16,14 @@ class JoinDirective extends AbstractDirective implements ArgumentBuilderDirectiv
     public static function definition(): string
     {
         return <<<'GRAPHQL'
+            enum JoinType {
+              INNER
+              LEFT
+            }
+
             directive @join(
                 target: String,
-                type: String
+                type: JoinType
             ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
         GRAPHQL;
     }
@@ -40,18 +45,21 @@ class JoinDirective extends AbstractDirective implements ArgumentBuilderDirectiv
             ));
         }
 
+        // Use a safe alias
         $alias = $relation . '_alias';
 
-        $type = strtolower($value['type'] ?? 'inner');
+        $type = $this->getArgument('type', 'INNER');
 
         $joinMethod = match ($type) {
-            'left'  => 'leftJoin',
-            'inner' => 'innerJoin',
+            'LEFT'  => 'leftJoin',
+            'INNER' => 'innerJoin',
+
             default => throw new \InvalidArgumentException(
                 sprintf('Unsupported join type "%s"', $type)
             ),
         };
 
+        // Avoid duplicate joins
         $joins = $queryBuilder->getDQLPart('join');
         $alreadyJoined = isset($joins[$rootAlias]) && array_filter(
                 $joins[$rootAlias],
@@ -59,7 +67,9 @@ class JoinDirective extends AbstractDirective implements ArgumentBuilderDirectiv
             );
 
         if (!$alreadyJoined) {
-            $queryBuilder->$joinMethod("$rootAlias.$relation", $alias);
+            $queryBuilder->$joinMethod("$rootAlias.$relation", $alias)
+                ->addSelect($alias)
+                ->distinct();
         }
 
         return $queryBuilder;

@@ -34,6 +34,9 @@ final class TypeVisitor
 
         $typeName = $typeNode->name->value;
 
+        $objectTypes = $this->collectObjectTypes($document);
+        $this->fieldVisitor->getArgumentVisitor()->setObjectTypes($objectTypes);
+
         $typeDirectives = $this->fieldVisitor->collectTypeDirectives($typeNode);
 
         foreach ($typeNode->fields as $fieldNode) {
@@ -48,6 +51,18 @@ final class TypeVisitor
 
             $this->intentRegistry->add($intent);
         }
+    }
+
+    private function collectObjectTypes(DocumentNode $document): array
+    {
+        $objectTypes = [];
+        foreach ($document->definitions as $def) {
+            if ($def instanceof ObjectTypeDefinitionNode) {
+                $objectTypes[$def->name->value] = $def;
+            }
+        }
+
+        return $objectTypes;
     }
 
     public function getIntentRegistry(): IntentRegistry

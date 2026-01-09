@@ -67,4 +67,10 @@ final class FieldVisitor extends AbstractASTDirectiveVisitor
     {
         return $this->argumentVisitor->getDirectiveRegistry();
     }
+
+    public function getArgumentVisitor(): ArgumentDirectiveVisitor
+    {
+        return $this->argumentVisitor;
+    }
+
 }

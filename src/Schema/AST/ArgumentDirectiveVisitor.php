@@ -17,6 +17,7 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 final class ArgumentDirectiveVisitor extends AbstractASTDirectiveVisitor
 {
     private array $inputTypes = [];
+    private array $objectTypes = [];
     private DirectiveRegistry $directiveRegistry;
     private ServiceLocator $directiveLocator;
     private FieldDefinitionNode $fieldDefinitionNode;
@@ -78,9 +79,14 @@ final class ArgumentDirectiveVisitor extends AbstractASTDirectiveVisitor
         return $this->directiveRegistry;
     }
 
+    public function setObjectTypes(array $objectTypes): void
+    {
+        $this->objectTypes = $objectTypes;
+    }
+
     private function getObjectTypeDefinition(string $typeName): ?ObjectTypeDefinitionNode
     {
-        return $this->inputTypes[$typeName] ?? null;
+        return $this->inputTypes[$typeName] ?? $this->objectTypes[$typeName] ?? null;
     }
 
     private function buildArgumentPath(InputValueDefinitionNode $argNode, string $parentPath): string
@@ -91,7 +97,6 @@ final class ArgumentDirectiveVisitor extends AbstractASTDirectiveVisitor
     private function applyArgumentNodeDirectives(Intent $intent, InputValueDefinitionNode $argNode, string $argPath): void
     {
         $existingArgs = [];
-
         foreach ($argNode->directives as $directiveNode) {
             $directive = $this->instantiateDirectiveFromNode($directiveNode, $argNode);
 

@@ -28,7 +28,14 @@ class OrderByDirective extends AbstractDirective implements ArgumentBuilderDirec
 
     public static function definition(): string
     {
+        // TODO: Quick fix to avoid re-declaring OrderByDirection enum multiple times
+        // This is not ideal and should be refactored in the future and use EnumTypes as well inputObjectTypes
         return <<<'GRAPHQL'
+            enum OrderByDirection {
+                ASC
+                DESC
+            }
+
             directive @orderBy(
                 columns: [String!],
                 direction: OrderByDirection = ASC,
