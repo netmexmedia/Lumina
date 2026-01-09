@@ -47,6 +47,10 @@ class OffsetDirective extends AbstractDirective implements ArgumentBuilderDirect
 
     public function handleArgumentBuilder(QueryBuilder $queryBuilder, $value): QueryBuilder
     {
+        if ($value === null) {
+            return $queryBuilder;
+        }
+
         $queryBuilder->setFirstResult($value);
 
         return $queryBuilder;

@@ -25,7 +25,7 @@ class JoinDirective extends AbstractDirective implements ArgumentBuilderDirectiv
 
     public function handleArgumentBuilder(QueryBuilder $queryBuilder, $value): QueryBuilder
     {
-        $relation = $this->nodeName();
+        $relation = $this->getColumn();
 
         $rootAlias  = $queryBuilder->getRootAliases()[0];
         $rootEntity = $queryBuilder->getRootEntities()[0];

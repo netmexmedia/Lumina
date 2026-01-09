@@ -28,7 +28,7 @@ final class LikeDirective extends AbstractDirective implements ArgumentBuilderDi
             return $queryBuilder;
         }
 
-        $column = $this->nodeName();
+        $column = $this->getColumn();
         $param = ':' . $column."_param";
 
         $alias = current($queryBuilder->getRootAliases());

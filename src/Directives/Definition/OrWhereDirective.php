@@ -26,6 +26,10 @@ final class OrWhereDirective extends AbstractDirective implements ArgumentBuilde
 
     public function handleArgumentBuilder(QueryBuilder $queryBuilder, $value): QueryBuilder
     {
+        if ($value === null) {
+            return $queryBuilder;
+        }
+
         $column = $this->nodeName();
         $param = ':' . $column."_param";
 

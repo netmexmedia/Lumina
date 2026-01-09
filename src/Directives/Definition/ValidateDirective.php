@@ -26,7 +26,11 @@ final class ValidateDirective extends AbstractDirective implements ArgumentBuild
 
     public function handleArgumentBuilder(QueryBuilder $queryBuilder, $value): QueryBuilder
     {
-        $column = $this->nodeName();
+        if ($value === null) {
+            return $queryBuilder;
+        }
+
+        $column = $this->getColumn();
         $param = ':' . $column."_param";
 
         $queryBuilder->andWhere("e.$column = $param")
