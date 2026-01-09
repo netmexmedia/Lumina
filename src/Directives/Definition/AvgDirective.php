@@ -5,36 +5,27 @@ namespace Netmex\Lumina\Directives\Definition;
 use Doctrine\ORM\QueryBuilder;
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
-use GraphQL\Language\AST\InputValueDefinitionNode;
 use GraphQL\Language\AST\NamedTypeNode;
 use GraphQL\Language\AST\NameNode;
-use GraphQL\Language\AST\NodeList;
 use GraphQL\Language\AST\NonNullTypeNode;
-use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use GraphQL\Type\Definition\ResolveInfo;
 use Netmex\Lumina\Context\Context;
-use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
-use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
-use Netmex\Lumina\Contracts\FieldInputDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Contracts\FieldTypeModifierInterface;
 use Netmex\Lumina\Contracts\FieldValueInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
-use Symfony\Component\Serializer\SerializerInterface;
 
-class CountDirective extends AbstractDirective implements FieldResolverInterface, FieldTypeModifierInterface
+class AvgDirective extends AbstractDirective implements FieldResolverInterface, FieldTypeModifierInterface
 {
-
     public static function name(): string
     {
-        return 'count';
+        return 'avg';
     }
 
     public static function definition(): string
     {
         return <<<'GRAPHQL'
-            directive @count(
+            directive @avg(
                 column: String = id
             ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
         GRAPHQL;
@@ -42,19 +33,21 @@ class CountDirective extends AbstractDirective implements FieldResolverInterface
 
     public function resolveField(FieldValueInterface $value, ?QueryBuilder $queryBuilder): callable
     {
-        $sumField = $this->getArgument('column', 'id');
+        $avgField = $this->getArgument('column', 'id');
 
-        return static function (mixed $root, array $arguments, Context $context, ResolveInfo $info) use ($queryBuilder, $sumField)
+        return static function (mixed $root, array $arguments, Context $context, ResolveInfo $info) use ($queryBuilder, $avgField)
         {
             $alias = current($queryBuilder->getRootAliases());
+
             $queryBuilder->resetDQLPart('select');
 
-            $result =  $queryBuilder
-                ->select("COUNT($alias.$sumField) AS count")
+
+            $result = $queryBuilder
+                ->select("AVG($alias.$avgField) AS avgResult")
                 ->getQuery()
                 ->getSingleScalarResult();
 
-            return (int) $result;
+            return (float) $result;
         };
     }
 
@@ -62,7 +55,7 @@ class CountDirective extends AbstractDirective implements FieldResolverInterface
     {
         $fieldNode->type = new NonNullTypeNode([
             'type' => new NamedTypeNode([
-                'name' => new NameNode(['value' => 'Int']),
+                'name' => new NameNode(['value' => 'Float']),
             ]),
         ]);
     }
