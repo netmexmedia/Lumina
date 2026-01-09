@@ -54,7 +54,6 @@ abstract class ASTDirectiveVisitorBase
                 $this->getDirectiveRegistry()
             );
 
-            // Resolver
             if ($directive instanceof FieldResolverInterface) {
                 $directive->setModel($this->getNamedType($fieldNode->type));
                 $intent->setResolver($directive);
@@ -74,7 +73,6 @@ abstract class ASTDirectiveVisitorBase
                 }
             }
 
-            // 🔥 CRITICAL: schema mutation must be independent
             if ($directive instanceof FieldArgumentDirectiveInterface) {
                 $this->injectDirectiveArguments(
                     $fieldNode,
@@ -93,9 +91,28 @@ abstract class ASTDirectiveVisitorBase
         ServiceLocator $locator,
         DirectiveRegistry $registry
     ): AbstractDirective {
-        $directive = clone $locator->get($registry->get($name));
+        $serviceId = $registry->get($name);
+
+        if ($serviceId === null) {
+            throw new \RuntimeException(sprintf(
+                'Directive "%s" used on %s is not registered. Make sure the directive exists in the DirectiveRegistry.',
+                $name,
+                $definitionNode::class
+            ));
+        }
+
+        $directive = clone $locator->get($serviceId);
+
+        if (!$directive instanceof AbstractDirective) {
+            throw new \RuntimeException(sprintf(
+                'Directive "%s" retrieved from the ServiceLocator is not an instance of AbstractDirective.',
+                $name
+            ));
+        }
+
         $directive->directiveNode = $directiveNode;
         $directive->definitionNode = $definitionNode;
+
         return $directive;
     }
 
