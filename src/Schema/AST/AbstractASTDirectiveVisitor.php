@@ -7,7 +7,9 @@ namespace Netmex\Lumina\Schema\AST;
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
+use Netmex\Lumina\Contracts\DirectiveEnumTypesInterface;
 use Netmex\Lumina\Contracts\DirectiveFactoryInterface;
+use Netmex\Lumina\Contracts\DirectiveInputObjectTypesInterface;
 use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
@@ -50,6 +52,21 @@ abstract class AbstractASTDirectiveVisitor
 
             $this->applyResolverDirective($intent, $fieldNode, $directive, $document);
             $this->applyArgumentDirective($intent, $fieldNode, $directive, $directiveNode, $existingArgs);
+
+            // TODO: We currently inject enums/input objects at the field level only.
+            // If future directives generate types for **argument definitions**, this logic in @Ref ArgumentDirectiveVisitor may need this implementation.
+            // Keep this in mind if you run into "Unknown type" errors during schema generation.
+            if ($directive instanceof DirectiveEnumTypesInterface) {
+                foreach ($directive->enumTypes() as $enumNode) {
+                    $document->definitions[] = $enumNode;
+                }
+            }
+
+            if ($directive instanceof DirectiveInputObjectTypesInterface) {
+                foreach ($directive->inputObjectTypes() as $inputNode) {
+                    $document->definitions[] = $inputNode;
+                }
+            }
         }
     }
 

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Netmex\Lumina\Schema\AST;
 
+use GraphQL\Language\AST\InputObjectTypeDefinitionNode;
+use GraphQL\Language\AST\InterfaceTypeDefinitionNode;
+use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use GraphQL\Language\AST\TypeDefinitionNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\DocumentNode;
@@ -25,6 +28,10 @@ final class TypeVisitor
 
     public function visitType(TypeDefinitionNode $typeNode, array $inputTypes, DocumentNode $document): void
     {
+        if (!$typeNode instanceof ObjectTypeDefinitionNode && !$typeNode instanceof InterfaceTypeDefinitionNode && !$typeNode instanceof InputObjectTypeDefinitionNode) {
+            return;
+        }
+
         $typeName = $typeNode->name->value;
 
         $typeDirectives = $this->fieldVisitor->collectTypeDirectives($typeNode);
