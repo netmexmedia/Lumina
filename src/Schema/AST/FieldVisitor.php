@@ -4,41 +4,57 @@ namespace Netmex\Lumina\Schema\AST;
 
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
-use Netmex\Lumina\Intent\Intent;
 use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
+use Netmex\Lumina\Intent\Intent;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
-final readonly class FieldVisitor
+final  class FieldVisitor extends ASTDirectiveVisitorBase
 {
     public function __construct(
-        private InputArgumentVisitor $inputArgumentVisitor,
+        private InputArgumentVisitor $inputVisitor
     ) {}
 
-    public function visitField(Intent $intent, FieldDefinitionNode $fieldNode, array $inputTypes, DocumentNode $document): void
-    {
+    public function visitField(
+        Intent $intent,
+        FieldDefinitionNode $fieldNode,
+        array $inputTypes,
+        DocumentNode $document
+    ): void {
         $existingArgs = [];
-        $this->applyFieldDirectives($intent, $fieldNode, $existingArgs, $document);
-
         foreach ($fieldNode->arguments as $argNode) {
-            $this->inputArgumentVisitor->visitInputArgument($intent, $argNode, $inputTypes, $document);
+            $existingArgs[$argNode->name->value] = true;
         }
 
-        $returnType = $this->inputArgumentVisitor->getNamedType($fieldNode->type);
-        $this->inputArgumentVisitor->traverseReturnTypeFields($intent, $returnType);
+        $this->applyFieldDirectives(
+            $intent,
+            $fieldNode,
+            $existingArgs,
+            $document
+        );
+
+        // Input traversal
+        foreach ($fieldNode->arguments as $argNode) {
+            $this->inputVisitor->visitInputArgument(
+                $intent,
+                $argNode,
+                $inputTypes
+            );
+        }
+
+        // Return type traversal
+        $returnType = $this->getNamedType($fieldNode->type);
+        $this->inputVisitor->traverseReturnTypeFields(
+            $intent,
+            $returnType
+        );
     }
 
-    public function collectTypeDirectives($typeNode): array
+    protected function getDirectiveLocator(): ServiceLocator
     {
-        return $this->inputArgumentVisitor->collectTypeDirectives($typeNode);
+        return $this->inputVisitor->getDirectiveLocator();
     }
-
-    public function applyTypeDirectivesToIntent($intent, array $typeDirectives): void
+    protected function getDirectiveRegistry(): DirectiveRegistry
     {
-        $this->inputArgumentVisitor->applyTypeDirectivesToIntent($intent, $typeDirectives);
-    }
-
-    private function applyFieldDirectives(Intent $intent, FieldDefinitionNode $fieldNode, array &$existingArgs, DocumentNode $document): void
-    {
-        $this->inputArgumentVisitor->applyFieldDirectives($intent, $fieldNode, $existingArgs, $document);
+        return $this->inputVisitor->getDirectiveRegistry();
     }
 }

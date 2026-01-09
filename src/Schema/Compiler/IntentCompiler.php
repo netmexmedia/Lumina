@@ -20,6 +20,11 @@ use Netmex\Lumina\Intent\IntentRegistry;
 use Netmex\Lumina\Schema\Source\SchemaSourceRegistry;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
+/**
+ * @Deprecated Use AST Compiler instead with appropriate passes instead.
+ * Compiles GraphQL schema AST into an IntentRegistry by processing types, fields,
+ * and directives to build a structured representation of intents.
+ */
 final class IntentCompiler
 {
     private DirectiveRegistry $directives;
