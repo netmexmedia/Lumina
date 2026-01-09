@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace Netmex\Lumina\Schema\AST;
 
+use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\InputValueDefinitionNode;
 use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Contracts\DirectiveFactoryInterface;
+use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
 use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Netmex\Lumina\Intent\Intent;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
-final class ArgumentDirectiveVisitor extends ASTDirectiveVisitorBase
+final class ArgumentDirectiveVisitorAbstract extends AbstractASTDirectiveVisitor
 {
     private array $inputTypes = [];
     private DirectiveRegistry $directiveRegistry;
     private ServiceLocator $directiveLocator;
+    private FieldDefinitionNode $fieldDefinitionNode;
 
     public function __construct(DirectiveFactoryInterface $directiveFactory, DirectiveRegistry $directiveRegistry, ServiceLocator $directiveLocator)
     {
@@ -26,18 +29,18 @@ final class ArgumentDirectiveVisitor extends ASTDirectiveVisitorBase
         $this->directiveLocator = $directiveLocator;
     }
 
-    public function visitArgument(Intent $intent, InputValueDefinitionNode $argNode, array $inputTypes, string $parentPath = ''): void
+    public function visitArgument(Intent $intent, InputValueDefinitionNode $argNode, FieldDefinitionNode $fieldNode, array $inputTypes, string $parentPath = ''): void
     {
         $this->inputTypes = $inputTypes;
+        $this->fieldDefinitionNode = $fieldNode;
 
         $argPath = $this->buildArgumentPath($argNode, $parentPath);
         $this->applyArgumentNodeDirectives($intent, $argNode, $argPath);
 
         $namedType = $this->getNamedType($argNode->type);
-
         if (isset($inputTypes[$namedType])) {
             foreach ($inputTypes[$namedType]->fields as $nestedArg) {
-                $this->visitArgument($intent, $nestedArg, $inputTypes, $argPath);
+                $this->visitArgument($intent, $nestedArg, $fieldNode, $inputTypes, $argPath);
             }
         }
     }
@@ -92,6 +95,11 @@ final class ArgumentDirectiveVisitor extends ASTDirectiveVisitorBase
 
             if ($directive instanceof ArgumentBuilderDirectiveInterface) {
                 $intent->addArgumentDirective($argPath, $directive);
+            }
+
+            if ($directive instanceof FieldArgumentDirectiveInterface) {
+                $existingArgs = [];
+                $this->injectDirectiveArguments($this->fieldDefinitionNode, $directive, $argNode, $existingArgs);
             }
         }
     }

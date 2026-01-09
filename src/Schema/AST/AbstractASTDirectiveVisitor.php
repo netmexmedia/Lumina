@@ -6,9 +6,6 @@ namespace Netmex\Lumina\Schema\AST;
 
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\FieldDefinitionNode;
-use GraphQL\Language\AST\ListValueNode;
-use GraphQL\Language\AST\ObjectValueNode;
-use GraphQL\Language\AST\ValueNode;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Contracts\DirectiveFactoryInterface;
 use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
@@ -18,7 +15,7 @@ use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Netmex\Lumina\Intent\Intent;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
-abstract class ASTDirectiveVisitorBase
+abstract class AbstractASTDirectiveVisitor
 {
     abstract protected function getDirectiveLocator(): ServiceLocator;
     abstract protected function getDirectiveRegistry(): DirectiveRegistry;
