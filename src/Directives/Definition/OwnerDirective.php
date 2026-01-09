@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Netmex\Lumina\Directives\Definition;
 
-use AllowDynamicProperties;
 use Doctrine\ORM\QueryBuilder;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
