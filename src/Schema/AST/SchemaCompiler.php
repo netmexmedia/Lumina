@@ -10,7 +10,7 @@ use GraphQL\Language\AST\InputObjectTypeDefinitionNode;
 use Netmex\Lumina\Intent\IntentRegistry;
 use Netmex\Lumina\Schema\Source\SchemaSourceRegistry;
 
-final class IntentCompiler
+final class SchemaCompiler
 {
     private array $inputTypes = [];
 

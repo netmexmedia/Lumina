@@ -1,16 +1,16 @@
 <?php
 
-namespace Netmex\Lumina\Schema\AST;
+namespace Netmex\Lumina\Schema;
 
-use GraphQL\Language\AST\FieldDefinitionNode;
 use GraphQL\Language\AST\DocumentNode;
-use Netmex\Lumina\Contracts\FieldResolverInterface;
+use GraphQL\Language\AST\FieldDefinitionNode;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
+use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
+use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Netmex\Lumina\Intent\Intent;
 use Symfony\Component\DependencyInjection\ServiceLocator;
-use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 
 abstract class ASTDirectiveVisitorBase
 {

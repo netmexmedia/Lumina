@@ -5,11 +5,12 @@ namespace Netmex\Lumina\Schema\AST;
 use GraphQL\Language\AST\InputValueDefinitionNode;
 use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
-use Netmex\Lumina\Intent\Intent;
 use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
+use Netmex\Lumina\Intent\Intent;
+use Netmex\Lumina\Schema\ASTDirectiveVisitorBase;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
-final class InputArgumentVisitor extends ASTDirectiveVisitorBase
+final class ArgumentDirectiveVisitor extends ASTDirectiveVisitorBase
 {
     private array $inputTypes = [];
 
@@ -18,7 +19,7 @@ final class InputArgumentVisitor extends ASTDirectiveVisitorBase
         private readonly ServiceLocator $directiveLocator
     ) {}
 
-    public function visitInputArgument(Intent $intent, InputValueDefinitionNode $argNode, array $inputTypes, string $parentPath = ''): void
+    public function visitArgument(Intent $intent, InputValueDefinitionNode $argNode, array $inputTypes, string $parentPath = ''): void
     {
         $this->inputTypes = $inputTypes;
         $argPath = $this->buildArgumentPath($argNode, $parentPath);
@@ -27,7 +28,7 @@ final class InputArgumentVisitor extends ASTDirectiveVisitorBase
         $namedType = $this->getNamedType($argNode->type);
         if (isset($inputTypes[$namedType])) {
             foreach ($inputTypes[$namedType]->fields as $nestedArg) {
-                $this->visitInputArgument($intent, $nestedArg, $inputTypes, $argPath);
+                $this->visitArgument($intent, $nestedArg, $inputTypes, $argPath);
             }
         }
     }
