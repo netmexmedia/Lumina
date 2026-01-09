@@ -11,11 +11,11 @@ use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Netmex\Lumina\Intent\Intent;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
-final class FieldVisitorAbstract extends AbstractASTDirectiveVisitor
+final class FieldVisitor extends AbstractASTDirectiveVisitor
 {
-    private ArgumentDirectiveVisitorAbstract $argumentVisitor;
+    private ArgumentDirectiveVisitor $argumentVisitor;
 
-    public function __construct(DirectiveFactoryInterface $directiveFactory, ArgumentDirectiveVisitorAbstract $argumentVisitor)
+    public function __construct(DirectiveFactoryInterface $directiveFactory, ArgumentDirectiveVisitor $argumentVisitor)
     {
         parent::__construct($directiveFactory);
         $this->argumentVisitor = $argumentVisitor;

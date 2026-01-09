@@ -12,11 +12,11 @@ use Netmex\Lumina\Intent\IntentRegistry;
 
 final class TypeVisitor
 {
-    private FieldVisitorAbstract $fieldVisitor;
+    private FieldVisitor $fieldVisitor;
     private IntentRegistry $intentRegistry;
     private IntentFactoryInterface $intentFactory;
 
-    public function __construct(FieldVisitorAbstract $fieldVisitor, IntentRegistry $intentRegistry, IntentFactoryInterface $intentFactory)
+    public function __construct(FieldVisitor $fieldVisitor, IntentRegistry $intentRegistry, IntentFactoryInterface $intentFactory)
     {
         $this->fieldVisitor = $fieldVisitor;
         $this->intentRegistry = $intentRegistry;

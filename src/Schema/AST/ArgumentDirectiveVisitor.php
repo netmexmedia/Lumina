@@ -14,7 +14,7 @@ use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Netmex\Lumina\Intent\Intent;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
-final class ArgumentDirectiveVisitorAbstract extends AbstractASTDirectiveVisitor
+final class ArgumentDirectiveVisitor extends AbstractASTDirectiveVisitor
 {
     private array $inputTypes = [];
     private DirectiveRegistry $directiveRegistry;
