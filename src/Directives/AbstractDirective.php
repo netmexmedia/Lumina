@@ -23,11 +23,13 @@ use GraphQL\Language\AST\ScalarTypeExtensionNode;
 use GraphQL\Language\AST\UnionTypeDefinitionNode;
 use GraphQL\Language\AST\UnionTypeExtensionNode;
 use Netmex\Lumina\Contracts\DirectiveInterface;
+use Netmex\Lumina\DependencyInjection\UseResolverRegistry;
 use Netmex\Lumina\DependencyInjection\UsesEntityRegistry;
 
 abstract class AbstractDirective implements DirectiveInterface
 {
     use UsesEntityRegistry;
+    use UseResolverRegistry;
 
     public DirectiveNode $directiveNode;
     public ScalarTypeDefinitionNode|ScalarTypeExtensionNode|ObjectTypeDefinitionNode|ObjectTypeExtensionNode|InterfaceTypeDefinitionNode|InterfaceTypeExtensionNode|UnionTypeDefinitionNode|UnionTypeExtensionNode|EnumTypeDefinitionNode|EnumTypeExtensionNode|InputObjectTypeDefinitionNode|InputObjectTypeExtensionNode|FieldDefinitionNode|InputValueDefinitionNode|EnumValueDefinitionNode $definitionNode;

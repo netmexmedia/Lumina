@@ -22,7 +22,7 @@ final class ResolverRegistryCompilerPass implements CompilerPassInterface
                 'Resolvers',
                 'Netmex\\Lumina\\Resolvers',
             ],
-            interface: FieldResolverInterface::class,
+            interface: null,
             serviceTag: 'lumina.resolver'
         );
     }

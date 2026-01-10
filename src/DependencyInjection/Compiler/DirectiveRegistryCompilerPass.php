@@ -6,6 +6,7 @@ namespace Netmex\Lumina\DependencyInjection\Compiler;
 
 use Netmex\Lumina\Contracts\DirectiveInterface;
 use Netmex\Lumina\DependencyInjection\Registry\EntityRegistry;
+use Netmex\Lumina\DependencyInjection\Registry\ResolverRegistry;
 use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -29,12 +30,23 @@ final class DirectiveRegistryCompilerPass implements CompilerPassInterface
 
         foreach ($container->findTaggedServiceIds('lumina.directive') as $id => $tags) {
             $definition = $container->getDefinition($id);
-            $definition->addMethodCall('setEntityRegistry', [$container->getDefinition(EntityRegistry::class)]);
+
+            $definition->addMethodCall('setEntityRegistry', [
+                $container->getDefinition(EntityRegistry::class)
+            ]);
+
+            $definition->addMethodCall('setResolverRegistry', [
+                $container->getDefinition(ResolverRegistry::class)
+            ]);
         }
+
 
         if (!$container->has(EntityRegistry::class)) {
             throw new \RuntimeException('EntityRegistry not yet registered!');
         }
 
+        if (!$container->has(ResolverRegistry::class)) {
+            throw new \RuntimeException('ResolverRegistry not yet registered!');
+        }
     }
 }

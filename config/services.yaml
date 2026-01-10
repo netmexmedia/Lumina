@@ -5,6 +5,8 @@ services:
     bind:
       $directiveLocator: !tagged_locator lumina.directive
 
+  # Autowire all classes in Netmex\Lumina
   Netmex\Lumina\:
     resource: '../src/*'
 
+  Symfony\Component\DependencyInjection\ContainerInterface: '@service_container'
