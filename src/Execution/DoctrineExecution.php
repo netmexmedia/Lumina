@@ -114,4 +114,29 @@ class DoctrineExecution implements ExecutionInterface
 
         return null;
     }
+
+//    This is a placeholder for a recursive execution method, not used currently
+//    It would be the ideal way to handle nested intents
+//    function execute(Intent $intent, ?array $parentRow = null) {
+//        $qb = new QueryBuilder($intent->model);
+//
+//        // Resolver defines base query
+//        $intent->resolver->resolveField($qb, $parentRow);
+//
+//        // Modifiers decorate it
+//        foreach ($intent->modifiers as $modifier) {
+//            $modifier->handleArgumentBuilder($qb);
+//        }
+//
+//        $result = $intent->resolver->resolveField($qb);
+//
+//        // Resolve children with NEW query builders
+//        foreach ($intent->children as $childIntent) {
+//            foreach ($result as &$row) {
+//                $row[$childIntent->fieldName] = execute($childIntent, $row);
+//            }
+//        }
+//
+//        return $result;
+//    }
 }
