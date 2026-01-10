@@ -32,12 +32,13 @@ final class SchemaVisitor
         // Visit each top-level type
         foreach ($document->definitions as $typeDef) {
             if ($this->isVisitableType($typeDef)) {
-                $this->typeVisitor->visitType($typeDef, $this->inputTypes, $this->objectTypes);
+                $this->typeVisitor->visitType($typeDef, $this->inputTypes, $this->objectTypes, $document);
             }
         }
 
+        $this->schemaSource->setDocument($document);
 
-        dd($this->typeVisitor->getIntentRegistry());
+//        dd($this->typeVisitor->getIntentRegistry());
         return $this->typeVisitor->getIntentRegistry();
     }
 

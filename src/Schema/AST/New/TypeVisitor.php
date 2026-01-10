@@ -24,7 +24,7 @@ final class TypeVisitor
     /**
      * Visit a type (object or interface) and process all fields.
      */
-    public function visitType($typeNode, array $inputTypes, array $objectTypes): void
+    public function visitType($typeNode, array $inputTypes, array $objectTypes, $document): void
     {
         $this->directiveVisitor->setInputTypes($inputTypes);
         $this->directiveVisitor->setObjectTypes($objectTypes);
@@ -42,7 +42,7 @@ final class TypeVisitor
                     $this->directiveVisitor->visitArguments($intent, $fieldNode->arguments);
                 }
 
-                $this->directiveVisitor->visitReturnType($intent, [$fieldNode]);
+                $this->directiveVisitor->visitReturnType($intent, [$fieldNode], $document);
             }
         }
     }
