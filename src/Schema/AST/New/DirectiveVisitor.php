@@ -74,25 +74,24 @@ final class DirectiveVisitor
     /**
      * Recursively visit return type fields and apply directives, including AST mutations.
      */
-    public function visitReturnType(Intent $parentIntent, array|NodeList $fields, $document = null): void
+    public function visitReturnType(Intent $parentIntent, array|NodeList $fields, $document = null, $rootFieldNode = null): void
     {
         foreach ($fields as $fieldNode) {
             $fieldName = $fieldNode->name->value;
             $namedType = $this->getNamedType($fieldNode->type);
 
+            // Determine the root field node for injection
+            $rootNodeForInjection = $rootFieldNode ?? $fieldNode;
+
             // --- Step 0: Reuse parent if field matches root
             $isRootField = $parentIntent->fieldName === $fieldName;
+            $childIntent = $isRootField
+                ? $parentIntent
+                : ($parentIntent->getChildByName($fieldName) ?? new Intent($parentIntent->typeName, $fieldName));
 
-            if ($isRootField) {
-                $childIntent = $parentIntent;
-            } else {
-                // --- Step 1: Check if a child Intent already exists for this field
-                $childIntent = $parentIntent->getChildByName($fieldName);
-                if (!$childIntent) {
-                    $childIntent = new Intent($parentIntent->typeName, $fieldName);
-                    $childIntent->setParent($parentIntent);
-                    $parentIntent->addChild($childIntent);
-                }
+            if (!$isRootField) {
+                $childIntent->setParent($parentIntent);
+                $parentIntent->addChild($childIntent);
             }
 
             // --- Step 2: Process directives
@@ -100,8 +99,8 @@ final class DirectiveVisitor
                 foreach ($fieldNode->directives as $directiveNode) {
                     $directive = $this->instantiateDirective($directiveNode, $fieldNode);
 
+                    // Resolver stays on the child/root intent
                     if ($directive instanceof FieldResolverInterface) {
-                        // Resolver stays on the parent/root Intent
                         $childIntent->setResolver($directive);
                         $directive->setModel($namedType);
 
@@ -109,23 +108,22 @@ final class DirectiveVisitor
                             $directive->modifyFieldType($fieldNode, $document);
                         }
 
+                        // Inject argument/input nodes for resolvers
                         if ($directive instanceof FieldArgumentDirectiveInterface && $document) {
-                            $this->injectDirectiveArguments($fieldNode, $directive, $directiveNode->name->value);
+                            $this->injectDirectiveArguments($rootNodeForInjection, $directive, $directiveNode->name->value);
                         }
-
                         if ($directive instanceof FieldInputDirectiveInterface && $document) {
-                            $this->injectDirectiveArguments($fieldNode, $directive, $directiveNode->name->value);
+                            $this->injectDirectiveArguments($rootNodeForInjection, $directive, $directiveNode->name->value);
                         }
                     } else {
-                        // Modifiers live on child Intent
+                        // Modifiers live on the child Intent
                         $childIntent->addModifier($directiveNode->name->value, $directive);
 
                         if ($directive instanceof FieldArgumentDirectiveInterface && $document) {
-                            $this->injectDirectiveArguments($fieldNode, $directive, $directiveNode->name->value);
+                            $this->injectDirectiveArguments($rootNodeForInjection, $directive, $directiveNode->name->value);
                         }
-
                         if ($directive instanceof FieldInputDirectiveInterface && $document) {
-                            $this->injectDirectiveArguments($fieldNode, $directive, $directiveNode->name->value);
+                            $this->injectDirectiveArguments($rootNodeForInjection, $directive, $directiveNode->name->value);
                         }
 
                         if ($document && method_exists($directive, 'modifyFieldType')) {
@@ -140,7 +138,8 @@ final class DirectiveVisitor
                 $this->visitReturnType(
                     $childIntent,
                     $this->objectTypes[$namedType]->fields,
-                    $document
+                    $document,
+                    $rootNodeForInjection // pass root field down
                 );
             }
         }
