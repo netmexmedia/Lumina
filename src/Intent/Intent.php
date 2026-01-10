@@ -18,7 +18,7 @@ final class Intent
     private ?Intent $parent = null;
 
     /** @var Intent[] */
-    private array $children = [];
+    public array $children = [];
 
     /** @var FieldResolverInterface|null */
     public ?FieldResolverInterface $resolver = null;
@@ -75,5 +75,16 @@ final class Intent
     public function getTypeModifiers(): array
     {
         return $this->typeModifiers;
+    }
+
+    public function getChildByName(string $fieldName): ?self
+    {
+        foreach ($this->children as $child) {
+            if ($child->fieldName === $fieldName) {
+                return $child;
+            }
+        }
+
+        return null;
     }
 }

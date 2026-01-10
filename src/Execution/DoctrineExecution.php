@@ -9,33 +9,84 @@ use Doctrine\ORM\QueryBuilder;
 use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\ResolveInfo;
 use Netmex\Lumina\Context\Context;
+use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Contracts\ExecutionInterface;
 use Netmex\Lumina\Intent\Intent;
 use Netmex\Lumina\Intent\IntentRegistry;
 use Netmex\Lumina\placeholder\TestFieldValue;
 
-// TODO: In the future we need to account for subscriptions, This requires a new executionMethod
 class DoctrineExecution implements ExecutionInterface
 {
     private EntityManagerInterface $entityManager;
     private IntentRegistry $intentRegistry;
 
-    public function __construct(EntityManagerInterface $entityManager, IntentRegistry $intentRegistry) {
+    public function __construct(EntityManagerInterface $entityManager, IntentRegistry $intentRegistry)
+    {
         $this->entityManager = $entityManager;
         $this->intentRegistry = $intentRegistry;
     }
 
-    public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info): array|int|string|float|bool|null
+    public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info)
     {
         $intent = $this->getIntent($parentTypeName, $field);
 
-        $queryBuilder = $this->createQueryBuilder($intent->resolver->getModel());
+        // Fully recursive execution
+        $result = $this->executeRecursive($intent, $arguments, $context, $info);
 
-        $this->applyTypeDirectives($intent, $queryBuilder, $arguments);
-        $this->applyArgumentDirectives($intent, $queryBuilder, $arguments);
-
-        return $this->executeResolver($intent, $queryBuilder, $arguments, $context, $info);
+        return $result;
     }
+
+    private function executeRecursive(Intent $intent, array $arguments, Context $context, ResolveInfo $info, $parentRow = null): array
+    {
+        // 1️⃣ Create QueryBuilder only if we have a resolver
+        $queryBuilder = null;
+        if ($intent->resolver) {
+            $queryBuilder = $this->createQueryBuilder($intent->resolver->getModel());
+        }
+
+        // 2️⃣ Apply modifiers for this Intent (always!)
+        foreach ($intent->modifiers as $argName => $directive) {
+            $value = $this->getNestedValue($arguments, $argName);
+
+            if ($directive instanceof ArgumentBuilderDirectiveInterface) {
+                // If no resolver yet, we still apply to the parent's QueryBuilder
+                if ($queryBuilder) {
+                    $directive->handleArgumentBuilder($queryBuilder, $value);
+                }
+            }
+        }
+
+        // 3️⃣ Call resolver if it exists
+        $rows = [];
+        if ($intent->resolver) {
+            $resolverCallable = $intent->resolver->resolveField(new TestFieldValue(), $queryBuilder);
+            $rows = $resolverCallable($parentRow, $arguments, $context, $info);
+        }
+
+        // 4️⃣ Recursively execute children (always), passing parentRow
+        foreach ($intent->children as $childIntent) {
+            if (!is_array($rows)) continue;
+
+            foreach ($rows as &$row) {
+                $childResult = $this->executeRecursive(
+                    $childIntent,
+                    $arguments,
+                    $context,
+                    $info,
+                    $row
+                );
+
+                // Only attach if there is actual data
+                if ($childIntent->resolver && !empty($childResult)) {
+                    $row[$childIntent->fieldName] = $childResult;
+                }
+            }
+        }
+
+
+        return $rows;
+    }
+
 
     private function getIntent(string $parentTypeName, FieldDefinition $field): Intent
     {
@@ -46,49 +97,6 @@ class DoctrineExecution implements ExecutionInterface
         }
 
         return $intent;
-    }
-
-    private function applyTypeDirectives(Intent $intent, QueryBuilder $queryBuilder, array $arguments): void
-    {
-        foreach ($intent->getTypeModifiers() as $typeName => $typeDirective) {
-            foreach ($typeDirective as $directive) {
-                $directive->handleArgumentBuilder($queryBuilder, $arguments);
-            }
-        }
-    }
-
-    private function applyArgumentDirectives(Intent $intent, QueryBuilder $queryBuilder, array $arguments): void
-    {
-        foreach ($intent->modifiers as $argName => $directives) {
-            $value = $this->getNestedValue($arguments, $argName);
-//            if ($value === null) {
-//                continue;
-//            }
-
-            foreach ($directives as $directive) {
-                $directive->handleArgumentBuilder($queryBuilder, $value);
-            }
-        }
-    }
-
-    private function getNestedValue(array $args, string $path): mixed
-    {
-        $keys = explode('.', $path);
-        $value = $args;
-        foreach ($keys as $key) {
-            if (!is_array($value) || !array_key_exists($key, $value)) {
-                return null;
-            }
-            $value = $value[$key];
-        }
-        return $value;
-    }
-
-    private function executeResolver(Intent $intent, QueryBuilder $queryBuilder, array $arguments, Context $context, ResolveInfo $info): array|int|string|float|bool|null
-    {
-        $resolver = $intent->resolver;
-        $callable = $resolver->resolveField(new TestFieldValue(), $queryBuilder);
-        return $callable(null, $arguments, $context, $info);
     }
 
     private function createQueryBuilder(string $shortClassName): QueryBuilder
@@ -108,35 +116,24 @@ class DoctrineExecution implements ExecutionInterface
     {
         foreach ($this->entityManager->getMetadataFactory()->getAllMetadata() as $meta) {
             if ($meta->getReflectionClass()->getShortName() === $shortName) {
-                return $meta->getName(); // return FQCN
+                return $meta->getName();
             }
         }
-
         return null;
     }
 
-//    This is a placeholder for a recursive execution method, not used currently
-//    It would be the ideal way to handle nested intents
-//    function execute(Intent $intent, ?array $parentRow = null) {
-//        $qb = new QueryBuilder($intent->model);
-//
-//        // Resolver defines base query
-//        $intent->resolver->resolveField($qb, $parentRow);
-//
-//        // Modifiers decorate it
-//        foreach ($intent->modifiers as $modifier) {
-//            $modifier->handleArgumentBuilder($qb);
-//        }
-//
-//        $result = $intent->resolver->resolveField($qb);
-//
-//        // Resolve children with NEW query builders
-//        foreach ($intent->children as $childIntent) {
-//            foreach ($result as &$row) {
-//                $row[$childIntent->fieldName] = execute($childIntent, $row);
-//            }
-//        }
-//
-//        return $result;
-//    }
+    private function getNestedValue(array $args, string $path): mixed
+    {
+        $keys = explode('.', $path);
+        $value = $args;
+
+        foreach ($keys as $key) {
+            if (!is_array($value) || !array_key_exists($key, $value)) {
+                return null;
+            }
+            $value = $value[$key];
+        }
+
+        return $value;
+    }
 }
