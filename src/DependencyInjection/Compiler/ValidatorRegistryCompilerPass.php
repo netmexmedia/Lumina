@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Netmex\Lumina\DependencyInjection\Compiler;
 
-use Netmex\Lumina\Contracts\PermissionInterface;
-use Netmex\Lumina\Permissions\PermissionRegistry;
+use Netmex\Lumina\Contracts\ValidatorInterface;
+use Netmex\Lumina\Validators\ValidatorRegistry;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-final class PermissionRegistryCompilerPass implements CompilerPassInterface
+final class ValidatorRegistryCompilerPass implements CompilerPassInterface
 {
     use Psr4RegistryCompilerPassTrait;
 
@@ -17,9 +15,9 @@ final class PermissionRegistryCompilerPass implements CompilerPassInterface
     {
         $this->registerPsr4NamespaceClasses(
             $container,
-            PermissionRegistry::class,
-            'Permissions',
-            PermissionInterface::class
+            ValidatorRegistry::class,
+            'Validators',
+            ValidatorInterface::class
         );
     }
 }

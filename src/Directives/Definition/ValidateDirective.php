@@ -7,9 +7,16 @@ namespace Netmex\Lumina\Directives\Definition;
 use Doctrine\ORM\QueryBuilder;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
+use Netmex\Lumina\Validators\ValidatorRegistry;
 
 final class ValidateDirective extends AbstractDirective implements ArgumentBuilderDirectiveInterface
 {
+    private ValidatorRegistry $registry;
+
+    public function __construct(ValidatorRegistry $registry) {
+        $this->registry = $registry;
+    }
+
     public static function name(): string
     {
         return 'validate';
@@ -19,22 +26,31 @@ final class ValidateDirective extends AbstractDirective implements ArgumentBuild
     {
         return <<<'GRAPHQL'
             directive @validate(
-                field: [String!]
-            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+                rules: [String!]!,
+            ) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
         GRAPHQL;
     }
 
     public function handleArgumentBuilder(QueryBuilder $queryBuilder, $value): QueryBuilder
     {
-        if ($value === null) {
-            return $queryBuilder;
+        $rules = $this->getArgument('rules', []);
+
+        if (!is_array($rules)) {
+            $rules = [$rules];
         }
 
-        $column = $this->getColumn();
-        $param = ':' . $column."_param";
+        foreach ($rules as $identifier) {
+            $className = $this->registry->resolve($identifier);
+            $validator = new $className($value);
 
-        $queryBuilder->andWhere("e.$column = $param")
-            ->setParameter($param, $value);
+            if (!method_exists($validator, 'handle')) {
+                throw new \LogicException("Validator class {$className} must have a handle() method.");
+            }
+
+            if (!$validator->handle($value)) {
+                throw new \LogicException("Validation failed for rule '{$identifier}'.");
+            }
+        }
 
         return $queryBuilder;
     }

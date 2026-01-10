@@ -9,6 +9,7 @@ use Netmex\Lumina\Config\SchemaConfig;
 use Netmex\Lumina\DependencyInjection\Compiler\DirectiveRegistryCompilerPass;
 use Netmex\Lumina\DependencyInjection\Compiler\PermissionRegistryCompilerPass;
 use Netmex\Lumina\DependencyInjection\Compiler\SchemaSourceCompilerPass;
+use Netmex\Lumina\DependencyInjection\Compiler\ValidatorRegistryCompilerPass;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -23,6 +24,7 @@ class LuminaBundle extends AbstractBundle
 
         $container->addCompilerPass(new DirectiveRegistryCompilerPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 10);
         $container->addCompilerPass(new PermissionRegistryCompilerPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 0);
+        $container->addCompilerPass(new ValidatorRegistryCompilerPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 0);
         $container->addCompilerPass(new SchemaSourceCompilerPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 0);
     }
 
@@ -38,7 +40,6 @@ class LuminaBundle extends AbstractBundle
     {
         // Core services
         $container->import(__DIR__ . '/../config/services.yaml');
-        $container->import(__DIR__ . '/../config/directives.yaml');
         $container->import(__DIR__ . '/../config/source.yaml');
 
         // Optional future files
