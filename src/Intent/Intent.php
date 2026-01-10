@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Netmex\Lumina\Intent;
 
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
+use Netmex\Lumina\Contracts\DirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
 
@@ -61,9 +62,9 @@ final class Intent
         $this->resolver = $directive;
     }
 
-    public function addModifier(string $argName, ArgumentBuilderDirectiveInterface $directive): void
+    public function addModifier(string $argName, DirectiveInterface $directive): void
     {
-        $this->modifiers[$argName][] = $directive;
+        $this->modifiers[$argName] = $directive;
     }
 
     public function addTypeModifier(string $typeName, AbstractDirective $directive): void
