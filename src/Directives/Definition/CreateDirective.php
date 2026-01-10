@@ -2,11 +2,9 @@
 
 namespace Netmex\Lumina\Directives\Definition;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use GraphQL\Type\Definition\ResolveInfo;
 use Netmex\Lumina\Context\Context;
-use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Contracts\FieldValueInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
@@ -36,7 +34,7 @@ class CreateDirective extends AbstractDirective implements FieldResolverInterfac
     public function resolveField(FieldValueInterface $value, ?QueryBuilder $queryBuilder): callable
     {
         $entityManager = $queryBuilder->getEntityManager();
-        $model = $this->resolveEntityFQCN($this->modelClass(), $entityManager);
+        $model = $this->resolveEntityFQCN($this->modelClass());
         $serializer = $this->serializer;
 
         return static function (mixed $root, array $arguments, Context $context, ResolveInfo $info) use ($entityManager, $model, $serializer)

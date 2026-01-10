@@ -65,8 +65,7 @@ class DeleteDirective extends AbstractDirective implements FieldResolverInterfac
     {
         $entityManager = $queryBuilder->getEntityManager();
 
-        $baseEntity = $this->getModel();
-        $model = $this->resolveEntityFQCN($baseEntity, $entityManager);
+        $model = $this->resolveEntityFQCN($this->modelClass());
         $normalizer = $this->normalizer;
 
         return static function (mixed $root, array $arguments, Context $context, ResolveInfo $info) use ($entityManager, $model, $normalizer)

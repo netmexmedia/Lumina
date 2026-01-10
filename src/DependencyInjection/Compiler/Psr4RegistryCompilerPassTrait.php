@@ -21,7 +21,7 @@ trait Psr4RegistryCompilerPassTrait
         ContainerBuilder $container,
         string $registryClass,
         string|array $subNamespace,
-        string $interface,
+        ?string $interface,
         ?string $serviceTag = null
     ): void {
         if (!$container->has($registryClass)) {
@@ -53,7 +53,7 @@ trait Psr4RegistryCompilerPassTrait
     private function processNamespaceDirectory(
         ContainerBuilder $container,
         Definition $registry,
-        string $interface,
+        ?string $interface,
         string $namespace,
         string $basePath,
         string $subPath,
@@ -88,7 +88,7 @@ trait Psr4RegistryCompilerPassTrait
     private function processFile(
         ContainerBuilder $container,
         Definition $registry,
-        string $interface,
+        ?string $interface, // make nullable
         string $namespace,
         string $basePath,
         \SplFileInfo $file,
@@ -97,7 +97,12 @@ trait Psr4RegistryCompilerPassTrait
         $relativePath = str_replace($basePath . '/', '', $file->getPathname());
         $className = $namespace . str_replace('/', '\\', substr($relativePath, 0, -4));
 
-        if (!class_exists($className) || !is_subclass_of($className, $interface)) {
+        if (!class_exists($className)) {
+            return;
+        }
+
+        // Only check is_subclass_of if an interface/class was provided
+        if ($interface !== null && !is_subclass_of($className, $interface)) {
             return;
         }
 
@@ -114,7 +119,6 @@ trait Psr4RegistryCompilerPassTrait
 
         $this->registerClass($container, $registry, $className, $identifier, $serviceTag);
     }
-
     /**
      * Check if a class constructor has scalar arguments.
      */

@@ -23,9 +23,12 @@ use GraphQL\Language\AST\ScalarTypeExtensionNode;
 use GraphQL\Language\AST\UnionTypeDefinitionNode;
 use GraphQL\Language\AST\UnionTypeExtensionNode;
 use Netmex\Lumina\Contracts\DirectiveInterface;
+use Netmex\Lumina\DependencyInjection\UsesEntityRegistry;
 
 abstract class AbstractDirective implements DirectiveInterface
 {
+    use UsesEntityRegistry;
+
     public DirectiveNode $directiveNode;
     public ScalarTypeDefinitionNode|ScalarTypeExtensionNode|ObjectTypeDefinitionNode|ObjectTypeExtensionNode|InterfaceTypeDefinitionNode|InterfaceTypeExtensionNode|UnionTypeDefinitionNode|UnionTypeExtensionNode|EnumTypeDefinitionNode|EnumTypeExtensionNode|InputObjectTypeDefinitionNode|InputObjectTypeExtensionNode|FieldDefinitionNode|InputValueDefinitionNode|EnumValueDefinitionNode $definitionNode;
     protected array $arguments = [];
@@ -89,16 +92,5 @@ abstract class AbstractDirective implements DirectiveInterface
             $typeNode = $typeNode->type;
         }
         return $typeNode->name->value;
-    }
-
-    protected function resolveEntityFQCN(string $shortName, EntityManagerInterface $entityManager): ?string
-    {
-        foreach ($entityManager->getMetadataFactory()->getAllMetadata() as $meta) {
-            if ($meta->getReflectionClass()->getShortName() === $shortName) {
-                return $meta->getName();
-            }
-        }
-
-        return null;
     }
 }

@@ -60,7 +60,7 @@ class UpdateDirective extends AbstractDirective implements FieldResolverInterfac
     public function resolveField(FieldValueInterface $value, ?QueryBuilder $queryBuilder): callable
     {
         $entityManager = $queryBuilder->getEntityManager();
-        $model = $this->resolveEntityFQCN($this->modelClass(), $entityManager);
+        $model = $this->resolveEntityFQCN($this->modelClass());
         $serializer = $this->serializer;
 
         return static function (mixed $root, array $arguments, Context $context, ResolveInfo $info) use ($entityManager, $model, $serializer)
