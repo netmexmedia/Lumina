@@ -38,9 +38,7 @@ class SumDirective extends AbstractDirective implements FieldResolverInterface, 
         return static function (mixed $root, array $arguments, Context $context, ResolveInfo $info) use ($queryBuilder, $sumField)
         {
             $alias = current($queryBuilder->getRootAliases());
-
             $queryBuilder->resetDQLPart('select');
-
 
             $result = $queryBuilder
                 ->select("SUM($alias.$sumField) AS sumResult")
