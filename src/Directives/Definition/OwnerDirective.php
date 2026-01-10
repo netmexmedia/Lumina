@@ -41,11 +41,11 @@ final class OwnerDirective extends AbstractDirective implements ArgumentBuilderD
             throw new \RuntimeException('No authenticated user for @owner');
         }
 
-        $rootAlias = $queryBuilder->getRootAliases()[0];
-        $column = $this->userColumn; // TODO: Directive argument for column name as well
+        $alias = current($queryBuilder->getRootAliases());
+        $column = $this->userColumn;
 
         $queryBuilder
-            ->andWhere("$rootAlias.$column = :owner_param")
+            ->andWhere("$alias.$column = :owner_param")
             ->setParameter('owner_param', $user->getId());
 
         return $queryBuilder;
