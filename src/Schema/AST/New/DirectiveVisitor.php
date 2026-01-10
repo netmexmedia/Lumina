@@ -89,6 +89,7 @@ final class DirectiveVisitor
                     }
 
                     if ($directive instanceof FieldResolverInterface) {
+                        $directive->setModel($this->getNamedType($fieldNode->type));
                         $parentIntent->setResolver($directive);
 
                         if ($document && method_exists($directive, 'modifyFieldType')) {
