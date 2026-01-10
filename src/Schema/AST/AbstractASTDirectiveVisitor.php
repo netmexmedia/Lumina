@@ -42,7 +42,7 @@ abstract class AbstractASTDirectiveVisitor
     public function applyTypeDirectivesToIntent(Intent $intent, array $typeDirectives): void
     {
         foreach ($typeDirectives as $directive) {
-            $intent->applyTypeDirective($directive->name(), $directive);
+            $intent->addTypeModifier($directive->name(), $directive);
         }
     }
 
@@ -94,10 +94,10 @@ abstract class AbstractASTDirectiveVisitor
         if ($directive instanceof ArgumentBuilderDirectiveInterface) {
             if ($directive instanceof FieldArgumentDirectiveInterface) {
                 foreach ($directive->argumentNodes() as $argNode) {
-                    $intent->addArgumentDirective($argNode->name->value, $directive);
+                    $intent->addModifier($argNode->name->value, $directive);
                 }
             } else {
-                $intent->addArgumentDirective($directiveNode->name->value, $directive);
+                $intent->addModifier($directiveNode->name->value, $directive);
             }
         }
 

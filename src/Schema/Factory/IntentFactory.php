@@ -12,7 +12,7 @@ final class IntentFactory implements IntentFactoryInterface
         $intent = new Intent($typeName, $fieldName);
 
         foreach ($typeDirectives as $directive) {
-            $intent->applyTypeDirective($directive->name(), $directive);
+            $intent->addTypeModifier($directive->name(), $directive);
         }
 
         return $intent;

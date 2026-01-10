@@ -11,16 +11,23 @@ use Netmex\Lumina\Directives\AbstractDirective;
 final class Intent
 {
     public string $typeName;
+
     public string $fieldName;
 
+    private ?Intent $parent = null;
+
+    /** @var Intent[] */
+    private array $children = [];
+
     /** @var FieldResolverInterface|null */
-    public ?FieldResolverInterface $resolverDirective = null;
+    public ?FieldResolverInterface $resolver = null;
 
     /** @var array<string, ArgumentBuilderDirectiveInterface[]> */
-    public array $argumentDirectives = [];
+    public array $modifiers = [];
 
-    /** @var AbstractDirective[] Type-level directives applied to this intent */
-    private array $typeDirectives = [];
+    // Type-level directives/modifiers
+    /** @var AbstractDirective[] */
+    private array $typeModifiers = [];
 
     public function __construct(string $typeName, string $fieldName)
     {
@@ -28,24 +35,44 @@ final class Intent
         $this->fieldName = $fieldName;
     }
 
-    public function addArgumentDirective(string $argName, ArgumentBuilderDirectiveInterface $directive): void
+    public function addChild(Intent $intent): void
     {
-        $this->argumentDirectives[$argName][] = $directive;
+        $this->children[] = $intent;
+    }
+
+    /** @return Intent[] */
+    public function getChildren(): array
+    {
+        return $this->children;
+    }
+
+    public function setParent(Intent $parent): void
+    {
+        $this->parent = $parent;
+    }
+
+    public function getParent(): ?Intent
+    {
+        return $this->parent;
     }
 
     public function setResolver(FieldResolverInterface $directive): void
     {
-        $this->resolverDirective = $directive;
+        $this->resolver = $directive;
     }
 
-    public function applyTypeDirective(string $typeName, AbstractDirective $directive): void
+    public function addModifier(string $argName, ArgumentBuilderDirectiveInterface $directive): void
     {
-        $this->typeDirectives[$typeName][] = $directive;
+        $this->modifiers[$argName][] = $directive;
     }
 
-    /** @return AbstractDirective[] All type-level directives for this field intent */
-    public function getTypeDirectives(): array
+    public function addTypeModifier(string $typeName, AbstractDirective $directive): void
     {
-        return $this->typeDirectives;
+        $this->typeModifiers[$typeName][] = $directive;
+    }
+
+    public function getTypeModifiers(): array
+    {
+        return $this->typeModifiers;
     }
 }

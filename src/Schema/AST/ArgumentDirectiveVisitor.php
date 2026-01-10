@@ -60,7 +60,7 @@ final class ArgumentDirectiveVisitor extends AbstractASTDirectiveVisitor
                 $directive = $this->instantiateDirectiveFromNode($directiveNode, $fieldNode);
 
                 if ($directive instanceof ArgumentBuilderDirectiveInterface) {
-                    $intent->addArgumentDirective($fieldPath, $directive);
+                    $intent->addModifier($fieldPath, $directive);
                 }
             }
 
@@ -101,7 +101,7 @@ final class ArgumentDirectiveVisitor extends AbstractASTDirectiveVisitor
             $directive = $this->instantiateDirectiveFromNode($directiveNode, $argNode);
 
             if ($directive instanceof ArgumentBuilderDirectiveInterface) {
-                $intent->addArgumentDirective($directiveNode->name->value, $directive);
+                $intent->addModifier($directiveNode->name->value, $directive);
             }
 
             if ($directive instanceof FieldArgumentDirectiveInterface) {

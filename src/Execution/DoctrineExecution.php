@@ -29,7 +29,7 @@ class DoctrineExecution implements ExecutionInterface
     {
         $intent = $this->getIntent($parentTypeName, $field);
 
-        $queryBuilder = $this->createQueryBuilder($intent->resolverDirective->getModel());
+        $queryBuilder = $this->createQueryBuilder($intent->resolver->getModel());
 
         $this->applyTypeDirectives($intent, $queryBuilder, $arguments);
         $this->applyArgumentDirectives($intent, $queryBuilder, $arguments);
@@ -41,7 +41,7 @@ class DoctrineExecution implements ExecutionInterface
     {
         $intent = $this->intentRegistry->get($parentTypeName, $field->name);
 
-        if (!$intent || !$intent->resolverDirective) {
+        if (!$intent || !$intent->resolver) {
             throw new \RuntimeException("No resolver intent found for {$parentTypeName}.{$field->name}");
         }
 
@@ -50,7 +50,7 @@ class DoctrineExecution implements ExecutionInterface
 
     private function applyTypeDirectives(Intent $intent, QueryBuilder $queryBuilder, array $arguments): void
     {
-        foreach ($intent->getTypeDirectives() as $typeName => $typeDirective) {
+        foreach ($intent->getTypeModifiers() as $typeName => $typeDirective) {
             foreach ($typeDirective as $directive) {
                 $directive->handleArgumentBuilder($queryBuilder, $arguments);
             }
@@ -59,7 +59,7 @@ class DoctrineExecution implements ExecutionInterface
 
     private function applyArgumentDirectives(Intent $intent, QueryBuilder $queryBuilder, array $arguments): void
     {
-        foreach ($intent->argumentDirectives as $argName => $directives) {
+        foreach ($intent->modifiers as $argName => $directives) {
             $value = $this->getNestedValue($arguments, $argName);
 //            if ($value === null) {
 //                continue;
@@ -86,7 +86,7 @@ class DoctrineExecution implements ExecutionInterface
 
     private function executeResolver(Intent $intent, QueryBuilder $queryBuilder, array $arguments, Context $context, ResolveInfo $info): array|int|string|float|bool|null
     {
-        $resolver = $intent->resolverDirective;
+        $resolver = $intent->resolver;
         $callable = $resolver->resolveField(new TestFieldValue(), $queryBuilder);
         return $callable(null, $arguments, $context, $info);
     }
