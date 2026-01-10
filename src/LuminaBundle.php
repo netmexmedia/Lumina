@@ -7,6 +7,7 @@ namespace Netmex\Lumina;
 use Netmex\Lumina\Config\LuminaConfig;
 use Netmex\Lumina\Config\SchemaConfig;
 use Netmex\Lumina\DependencyInjection\Compiler\DirectiveRegistryCompilerPass;
+use Netmex\Lumina\DependencyInjection\Compiler\PermissionRegistryCompilerPass;
 use Netmex\Lumina\DependencyInjection\Compiler\SchemaSourceCompilerPass;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
@@ -21,6 +22,7 @@ class LuminaBundle extends AbstractBundle
         parent::build($container);
 
         $container->addCompilerPass(new DirectiveRegistryCompilerPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 10);
+        $container->addCompilerPass(new PermissionRegistryCompilerPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 0);
         $container->addCompilerPass(new SchemaSourceCompilerPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 0);
     }
 
