@@ -7,6 +7,7 @@ namespace Netmex\Lumina\Schema\AST\New;
 use GraphQL\Language\AST\NodeList;
 use Netmex\Lumina\Contracts\DirectiveInterface;
 use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
+use Netmex\Lumina\Contracts\FieldInputDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Intent\Intent;
 use Netmex\Lumina\Schema\Factory\DirectiveFactory;
@@ -73,38 +74,60 @@ final class DirectiveVisitor
     /**
      * Recursively visit return type fields and apply directives, including AST mutations.
      */
-    public function visitReturnType(Intent $parentIntent, array|NodeList $fields, $document = null): void {
+    public function visitReturnType(Intent $parentIntent, array|NodeList $fields, $document = null): void
+    {
         foreach ($fields as $fieldNode) {
+            $fieldName = $fieldNode->name->value;
             $namedType = $this->getNamedType($fieldNode->type);
-            $hasDirective = !empty($fieldNode->directives);
 
-            $childIntent = null;
+            // --- Step 0: Reuse parent if field matches root
+            $isRootField = $parentIntent->fieldName === $fieldName;
 
-            if ($hasDirective) {
+            if ($isRootField) {
+                $childIntent = $parentIntent;
+            } else {
+                // --- Step 1: Check if a child Intent already exists for this field
+                $childIntent = $parentIntent->getChildByName($fieldName);
+                if (!$childIntent) {
+                    $childIntent = new Intent($parentIntent->typeName, $fieldName);
+                    $childIntent->setParent($parentIntent);
+                    $parentIntent->addChild($childIntent);
+                }
+            }
+
+            // --- Step 2: Process directives
+            if (!empty($fieldNode->directives)) {
                 foreach ($fieldNode->directives as $directiveNode) {
                     $directive = $this->instantiateDirective($directiveNode, $fieldNode);
 
-                    if ($directive instanceof FieldArgumentDirectiveInterface && $document) {
-                        $this->injectDirectiveArguments($fieldNode, $directive, $directiveNode->name->value);
-                    }
-
                     if ($directive instanceof FieldResolverInterface) {
-                        $directive->setModel($this->getNamedType($fieldNode->type));
-                        $parentIntent->setResolver($directive);
+                        // Resolver stays on the parent/root Intent
+                        $childIntent->setResolver($directive);
+                        $directive->setModel($namedType);
 
                         if ($document && method_exists($directive, 'modifyFieldType')) {
                             $directive->modifyFieldType($fieldNode, $document);
                         }
-                    } else {
-                        if (!$childIntent) {
-                            $childIntent = new Intent($parentIntent->typeName, $fieldNode->name->value);
-                            $childIntent->setParent($parentIntent);
-                            $parentIntent->addChild($childIntent);
+
+                        if ($directive instanceof FieldArgumentDirectiveInterface && $document) {
+                            $this->injectDirectiveArguments($fieldNode, $directive, $directiveNode->name->value);
                         }
 
-                        $childIntent->addModifier($fieldNode->name->value, $directive);
+                        if ($directive instanceof FieldInputDirectiveInterface && $document) {
+                            $this->injectDirectiveArguments($fieldNode, $directive, $directiveNode->name->value);
+                        }
+                    } else {
+                        // Modifiers live on child Intent
+                        $childIntent->addModifier($directiveNode->name->value, $directive);
 
-                        // Apply AST mutation if directive supports it
+                        if ($directive instanceof FieldArgumentDirectiveInterface && $document) {
+                            $this->injectDirectiveArguments($fieldNode, $directive, $directiveNode->name->value);
+                        }
+
+                        if ($directive instanceof FieldInputDirectiveInterface && $document) {
+                            $this->injectDirectiveArguments($fieldNode, $directive, $directiveNode->name->value);
+                        }
+
                         if ($document && method_exists($directive, 'modifyFieldType')) {
                             $directive->modifyFieldType($fieldNode, $document);
                         }
@@ -112,16 +135,17 @@ final class DirectiveVisitor
                 }
             }
 
-            // Recurse into nested object types
+            // --- Step 3: Recurse into nested object types
             if (isset($this->objectTypes[$namedType])) {
                 $this->visitReturnType(
-                    $childIntent ?? $parentIntent,
+                    $childIntent,
                     $this->objectTypes[$namedType]->fields,
                     $document
                 );
             }
         }
     }
+
 
     private function getNamedType($typeNode): string
     {
