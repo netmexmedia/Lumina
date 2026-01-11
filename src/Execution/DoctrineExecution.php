@@ -29,8 +29,29 @@ class DoctrineExecution implements ExecutionInterface
     public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info): array {
         $intent = $this->getIntent($parentTypeName, $field);
 
+
+        dd($this->flattenIntent($intent));
         return $this->executeRecursive($intent, $arguments, $context, $info);
     }
+
+    public function flattenIntent(Intent $intent): array
+    {
+        $flattened = [];
+
+        // First, flatten children
+        foreach ($intent->children as $child) {
+            $flattened = array_merge($flattened, $this->flattenIntent($child));
+        }
+
+        // Only include the intent itself if it has a resolver
+        if ($intent->resolver !== null) {
+            $flattened[] = $intent;
+        }
+
+        return $flattened;
+    }
+
+
 
     private function executeRecursive(Intent $intent, array $arguments, Context $context, ResolveInfo $info, $parentRow = null, ?string $parentModel = null): array
     {
