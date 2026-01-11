@@ -10,6 +10,7 @@ use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldInputDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Intent\Intent;
+use Netmex\Lumina\Intent\IntentMetaData;
 use Netmex\Lumina\Schema\Factory\DirectiveFactory;
 
 final class DirectiveVisitor
@@ -45,6 +46,7 @@ final class DirectiveVisitor
 
             if ($hasDirective) {
                 $argIntent = new Intent($parentIntent->typeName, $argNode->name->value);
+                $argIntent->setMetaData(new IntentMetaData());
                 $argIntent->setParent($parentIntent);
                 $parentIntent->addChild($argIntent);
 
@@ -80,35 +82,49 @@ final class DirectiveVisitor
             $fieldName = $fieldNode->name->value;
             $namedType = $this->getNamedType($fieldNode->type);
 
-            // Determine the root field node for injection
-            $rootNodeForInjection = $rootFieldNode ?? $fieldNode;
-
-            // --- Step 0: Reuse parent if field matches root
+            // --- Step 0: Determine child intent
             $isRootField = $parentIntent->fieldName === $fieldName;
             $childIntent = $isRootField
                 ? $parentIntent
                 : ($parentIntent->getChildByName($fieldName) ?? new Intent($parentIntent->typeName, $fieldName));
 
-            if (!$isRootField) {
+            // Ensure metaData exists
+            if (!$childIntent->metaData) {
+                $childIntent->setMetaData(new IntentMetaData());
+            }
+
+            // Add field to its own metaData
+            $childIntent->getMetaData()->setFields([$fieldName]);
+
+            // If this is a new child, attach to parent
+            if (!$isRootField && !$childIntent->getParent()) {
                 $childIntent->setParent($parentIntent);
                 $parentIntent->addChild($childIntent);
             }
 
-            // --- Step 2: Process directives
+            $rootNodeForInjection = $fieldNode;
+
+            // --- Step 1: Process directives
             if (!empty($fieldNode->directives)) {
                 foreach ($fieldNode->directives as $directiveNode) {
                     $directive = $this->instantiateDirective($directiveNode, $fieldNode);
 
-                    // Resolver stays on the child/root intent
                     if ($directive instanceof FieldResolverInterface) {
+                        // Resolver lives on child
                         $childIntent->setResolver($directive);
                         $directive->setModel($namedType);
+                        $childIntent->getMetaData()->setStrategy($directive->name());
+                        $childIntent->getMetaData()->setModel($directive->modelClass());
+                        // Attach child metaData to parent
+                        if ($childIntent->getParent()) {
+                            $childIntent->getParent()->getMetaData()->addChild($childIntent->getMetaData());
+                        }
 
                         if ($document && method_exists($directive, 'modifyFieldType')) {
                             $directive->modifyFieldType($fieldNode, $document);
                         }
 
-                        // Inject argument/input nodes for resolvers
+                        // Inject argument/input nodes for resolver
                         if ($directive instanceof FieldArgumentDirectiveInterface && $document) {
                             $this->injectDirectiveArguments($rootNodeForInjection, $directive, $directiveNode->name->value);
                         }
@@ -116,8 +132,12 @@ final class DirectiveVisitor
                             $this->injectDirectiveArguments($rootNodeForInjection, $directive, $directiveNode->name->value);
                         }
                     } else {
-                        // Modifiers live on the child Intent
+                        // Modifiers live on child intent
                         $childIntent->addModifier($directiveNode->name->value, $directive);
+
+                        if ($document && method_exists($directive, 'modifyFieldType')) {
+                            $directive->modifyFieldType($fieldNode, $document);
+                        }
 
                         if ($directive instanceof FieldArgumentDirectiveInterface && $document) {
                             $this->injectDirectiveArguments($rootNodeForInjection, $directive, $directiveNode->name->value);
@@ -125,26 +145,31 @@ final class DirectiveVisitor
                         if ($directive instanceof FieldInputDirectiveInterface && $document) {
                             $this->injectDirectiveArguments($rootNodeForInjection, $directive, $directiveNode->name->value);
                         }
-
-                        if ($document && method_exists($directive, 'modifyFieldType')) {
-                            $directive->modifyFieldType($fieldNode, $document);
-                        }
                     }
                 }
             }
 
-            // --- Step 3: Recurse into nested object types
+            // --- Step 2: Recurse into nested object types
             if (isset($this->objectTypes[$namedType])) {
                 $this->visitReturnType(
                     $childIntent,
                     $this->objectTypes[$namedType]->fields,
                     $document,
-                    $rootNodeForInjection // pass root field down
+                    $rootNodeForInjection
                 );
             }
+
+            // --- Step 3: Merge children fields into this intent's metaData
+            $columns = $childIntent->getMetaData()->getFields();
+            foreach ($childIntent->getChildrenMetaData() as $childMetaArray) {
+                foreach ($childMetaArray as $childMeta) {
+                    $columns = array_merge($columns, $childMeta->getFields());
+                }
+            }
+            $columns = array_unique($columns);
+            $childIntent->getMetaData()->setFields($columns);
         }
     }
-
 
     private function getNamedType($typeNode): string
     {

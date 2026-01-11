@@ -7,6 +7,7 @@ namespace Netmex\Lumina\Intent;
 use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Contracts\DirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
+use Netmex\Lumina\Contracts\IntentMetaDataInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
 
 final class Intent
@@ -14,6 +15,8 @@ final class Intent
     public string $typeName;
 
     public string $fieldName;
+
+    public ?IntentMetaDataInterface $metaData = null;
 
     private ?Intent $parent = null;
 
@@ -87,4 +90,30 @@ final class Intent
 
         return null;
     }
+
+    public function getChildrenMetaData(): array
+    {
+        return array_filter(
+            array_map(fn(Intent $child) => $child->metaData ?? null, $this->children),
+            fn($meta) => $meta !== null
+        );
+    }
+
+
+    public function setMetaData(IntentMetaData $param)
+    {
+        $this->metaData = $param;
+    }
+
+    public function getMetaData(): IntentMetaDataInterface
+    {
+        if ($this->metaData === null) {
+            $this->metaData = new IntentMetaData();
+        }
+
+        return $this->metaData;
+    }
+
+
+
 }

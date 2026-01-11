@@ -26,54 +26,47 @@ class DoctrineExecution implements ExecutionInterface
         $this->intentRegistry = $intentRegistry;
     }
 
-    public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info): array {
+    public function executeField(
+        string $parentTypeName,
+        FieldDefinition $field,
+        array $arguments,
+        Context $context,
+        ResolveInfo $info
+    ): array {
         $intent = $this->getIntent($parentTypeName, $field);
+        $result = $this->executeRecursive($intent, $arguments, $context, $info);
 
-
-        dd($this->flattenIntent($intent));
-        return $this->executeRecursive($intent, $arguments, $context, $info);
+        return $result;
     }
 
-    public function flattenIntent(Intent $intent): array
-    {
-        $flattened = [];
-
-        // First, flatten children
-        foreach ($intent->children as $child) {
-            $flattened = array_merge($flattened, $this->flattenIntent($child));
-        }
-
-        // Only include the intent itself if it has a resolver
-        if ($intent->resolver !== null) {
-            $flattened[] = $intent;
-        }
-
-        return $flattened;
-    }
-
-
-
-    private function executeRecursive(Intent $intent, array $arguments, Context $context, ResolveInfo $info, $parentRow = null, ?string $parentModel = null): array
-    {
+    private function executeRecursive(
+        Intent $intent,
+        array $arguments,
+        Context $context,
+        ResolveInfo $info,
+        $parentRow = null,
+        ?string $parentModel = null
+    ): array {
         $model = $intent->resolver?->getModel() ?? $parentModel;
+        if (!$model) return [];
 
-        if (!$model) {
-            return [];
-        }
+        // 1️⃣ Build QueryBuilder for this intent
+        $qb = $this->createQueryBuilder($model, 'root');
 
-        $queryBuilder = $this->createQueryBuilder($model);
-        $this->applyModifiers($intent, $queryBuilder, $arguments);
+        // 2️⃣ Apply child constraints (hasMany, etc.)
+        $this->applyChildConstraints($intent, $qb);
 
-        if (!$intent->resolver) {
-            return [];
-        }
+        // 3️⃣ Apply argument modifiers for this intent
+        $this->applyModifiers($intent, $qb, $arguments);
 
-        $rows = $this->resolveField($intent, $queryBuilder, $parentRow, $arguments, $context, $info);
+        if (!$intent->resolver) return [];
 
+        // 4️⃣ Fetch rows for this intent
+        $rows = $this->resolveField($intent, $qb, $parentRow, $arguments, $context, $info);
+
+        // 5️⃣ Recursively fetch children
         foreach ($intent->children as $childIntent) {
-            if (!$childIntent->resolver) {
-                continue;
-            }
+            if (!$childIntent->resolver) continue;
 
             foreach ($rows as &$row) {
                 $row[$childIntent->fieldName] = $this->executeRecursive(
@@ -90,6 +83,57 @@ class DoctrineExecution implements ExecutionInterface
         return $rows;
     }
 
+    // =======================
+    // Child Constraints
+    // =======================
+    private function applyChildConstraints(Intent $intent, QueryBuilder $qb): void
+    {
+        $i = 0;
+
+        foreach ($intent->children as $childIntent) {
+            $meta = $childIntent->metaData;
+
+            if (!$childIntent->resolver || !$meta || $meta->getStrategy() !== 'hasMany') {
+                continue;
+            }
+
+            $childModel = $meta->getModel();
+            if (!$childModel) continue;
+
+            $childAlias = 'c' . (++$i);
+
+            $subQb = $this->buildChildSubQuery($intent, $childIntent, $childAlias);
+
+            $qb->andWhere(
+                $qb->expr()->exists($subQb->getDQL())
+            );
+        }
+    }
+
+    private function buildChildSubQuery(Intent $parentIntent, Intent $childIntent, string $childAlias): QueryBuilder
+    {
+        $subQb = $this->createQueryBuilder($childIntent->metaData->getModel(), $childAlias);
+
+        // Determine association field on child that references parent
+        $associationField = $this->getAssociationField($parentIntent, $childIntent);
+
+        $subQb->select('1')
+            ->andWhere(sprintf('%s.%s = root', $childAlias, $associationField));
+
+        $this->applyModifiers($childIntent, $subQb, []);
+
+        return $subQb;
+    }
+
+    private function getAssociationField(Intent $parentIntent, Intent $childIntent): string
+    {
+        // This should match the property on the child entity that references the parent
+        return strtolower($parentIntent->getMetaData()->getModel());
+    }
+
+    // =======================
+    // Modifiers
+    // =======================
     private function applyModifiers(Intent $intent, QueryBuilder $qb, array $arguments): void
     {
         foreach ($intent->modifiers as $argName => $directive) {
@@ -100,6 +144,9 @@ class DoctrineExecution implements ExecutionInterface
         }
     }
 
+    // =======================
+    // Resolve fields
+    // =======================
     private function resolveField(
         Intent $intent,
         QueryBuilder $qb,
@@ -113,6 +160,9 @@ class DoctrineExecution implements ExecutionInterface
         return $resolverCallable($parentRow, $arguments, $context, $info);
     }
 
+    // =======================
+    // Helpers
+    // =======================
     private function getIntent(string $parentTypeName, FieldDefinition $field): Intent
     {
         $intent = $this->intentRegistry->get($parentTypeName, $field->name);
@@ -124,7 +174,7 @@ class DoctrineExecution implements ExecutionInterface
         return $intent;
     }
 
-    private function createQueryBuilder(string $shortClassName): QueryBuilder
+    private function createQueryBuilder(string $shortClassName, string $alias): QueryBuilder
     {
         $fqcn = $this->resolveEntityFQCN($shortClassName);
 
@@ -134,7 +184,7 @@ class DoctrineExecution implements ExecutionInterface
 
         return $this->entityManager
             ->getRepository($fqcn)
-            ->createQueryBuilder('e');
+            ->createQueryBuilder($alias);
     }
 
     private function resolveEntityFQCN(string $shortName): ?string
@@ -154,9 +204,7 @@ class DoctrineExecution implements ExecutionInterface
         $value = $args;
 
         foreach ($keys as $key) {
-            if (!is_array($value) || !array_key_exists($key, $value)) {
-                return null;
-            }
+            if (!is_array($value) || !array_key_exists($key, $value)) return null;
             $value = $value[$key];
         }
 

@@ -47,6 +47,6 @@ final readonly class ExecutionResolver
     private function createFieldResolver(string $parentType, FieldDefinition $field): callable
     {
         return fn($root, array $args, Context $context, ResolveInfo $info) =>
-        dump($this->execution->executeField($parentType, $field, $args, $context, $info));
+        $this->execution->executeField($parentType, $field, $args, $context, $info);
     }
 }
