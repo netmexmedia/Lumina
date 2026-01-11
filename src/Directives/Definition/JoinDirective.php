@@ -3,10 +3,11 @@
 namespace Netmex\Lumina\Directives\Definition;
 
 use Doctrine\ORM\QueryBuilder;
-use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
+use Netmex\Lumina\Contracts\FieldResolverInterface;
+use Netmex\Lumina\Contracts\FieldValueInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
 
-class JoinDirective extends AbstractDirective implements ArgumentBuilderDirectiveInterface
+class JoinDirective extends AbstractDirective implements FieldResolverInterface
 {
     public static function name(): string
     {
@@ -24,54 +25,33 @@ class JoinDirective extends AbstractDirective implements ArgumentBuilderDirectiv
             directive @join(
                 target: String,
                 type: JoinType
-            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+            ) repeatable on FIELD_DEFINITION
         GRAPHQL;
     }
 
-    public function handleArgumentBuilder(QueryBuilder $queryBuilder, $value): QueryBuilder
+    public function resolveField(FieldValueInterface $value, ?QueryBuilder $queryBuilder): callable
     {
-        $relation = $this->getColumn();
+        $shortName = $this->modelClass();
+        $fqcn = $this->resolveEntityFQCN($shortName);
 
-        $rootAlias  = $queryBuilder->getRootAliases()[0];
-        $rootEntity = $queryBuilder->getRootEntities()[0];
-
-        $metadata = $queryBuilder->getEntityManager()->getClassMetadata($rootEntity);
-
-        if (!$metadata->hasAssociation($relation)) {
-            throw new \InvalidArgumentException(sprintf(
-                'Relation "%s" does not exist on %s',
-                $relation,
-                $rootEntity
-            ));
+        if (!$fqcn) {
+            throw new \RuntimeException("Cannot resolve entity FQCN for $shortName");
         }
 
-        // Use a safe alias
-        $alias = $relation . '_alias';
+        return function ($root, array $arguments, $context, $info) use ($fqcn) {
+            $em = $context->entityManager;
+            $relation = $this->getColumn();
+            $type     = $this->getArgument('type', 'INNER');
 
-        $type = $this->getArgument('type', 'INNER');
+            $qb = $em->getRepository($fqcn)->createQueryBuilder('j');
 
-        $joinMethod = match ($type) {
-            'LEFT'  => 'leftJoin',
-            'INNER' => 'innerJoin',
+            if ($type === 'LEFT') {
+                $qb->leftJoin("j.$relation", 'r');
+            } else {
+                $qb->innerJoin("j.$relation", 'r');
+            }
 
-            default => throw new \InvalidArgumentException(
-                sprintf('Unsupported join type "%s"', $type)
-            ),
+            return $qb->getQuery()->getArrayResult();
         };
-
-        // Avoid duplicate joins
-        $joins = $queryBuilder->getDQLPart('join');
-        $alreadyJoined = isset($joins[$rootAlias]) && array_filter(
-                $joins[$rootAlias],
-                static fn ($join) => $join->getAlias() === $alias
-            );
-
-        if (!$alreadyJoined) {
-            $queryBuilder->$joinMethod("$rootAlias.$relation", $alias)
-                ->addSelect($alias)
-                ->distinct();
-        }
-
-        return $queryBuilder;
     }
 }

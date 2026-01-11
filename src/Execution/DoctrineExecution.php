@@ -26,67 +26,71 @@ class DoctrineExecution implements ExecutionInterface
         $this->intentRegistry = $intentRegistry;
     }
 
-    public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info)
-    {
+    public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info): array {
         $intent = $this->getIntent($parentTypeName, $field);
 
-        // Fully recursive execution
-        $result = $this->executeRecursive($intent, $arguments, $context, $info);
-
-        return $result;
+        return $this->executeRecursive($intent, $arguments, $context, $info);
     }
 
-    private function executeRecursive(Intent $intent, array $arguments, Context $context, ResolveInfo $info, $parentRow = null): array
+    private function executeRecursive(Intent $intent, array $arguments, Context $context, ResolveInfo $info, $parentRow = null, ?string $parentModel = null): array
     {
-        // 1️⃣ Create QueryBuilder only if we have a resolver
-        $queryBuilder = null;
-        if ($intent->resolver) {
-            $queryBuilder = $this->createQueryBuilder($intent->resolver->getModel());
+        $model = $intent->resolver?->getModel() ?? $parentModel;
+
+        if (!$model) {
+            return [];
         }
 
-        // 2️⃣ Apply modifiers for this Intent (always!)
-        foreach ($intent->modifiers as $argName => $directive) {
-            $value = $this->getNestedValue($arguments, $argName);
+        $queryBuilder = $this->createQueryBuilder($model);
+        $this->applyModifiers($intent, $queryBuilder, $arguments);
 
-            if ($directive instanceof ArgumentBuilderDirectiveInterface) {
-                // If no resolver yet, we still apply to the parent's QueryBuilder
-                if ($queryBuilder) {
-                    $directive->handleArgumentBuilder($queryBuilder, $value);
-                }
-            }
+        if (!$intent->resolver) {
+            return [];
         }
 
-        // 3️⃣ Call resolver if it exists
-        $rows = [];
-        if ($intent->resolver) {
-            $resolverCallable = $intent->resolver->resolveField(new TestFieldValue(), $queryBuilder);
-            $rows = $resolverCallable($parentRow, $arguments, $context, $info);
-        }
+        $rows = $this->resolveField($intent, $queryBuilder, $parentRow, $arguments, $context, $info);
 
-        // 4️⃣ Recursively execute children (always), passing parentRow
         foreach ($intent->children as $childIntent) {
-            if (!is_array($rows)) continue;
+            if (!$childIntent->resolver) {
+                continue;
+            }
 
             foreach ($rows as &$row) {
-                $childResult = $this->executeRecursive(
+                $row[$childIntent->fieldName] = $this->executeRecursive(
                     $childIntent,
                     $arguments,
                     $context,
                     $info,
-                    $row
+                    $row,
+                    $model
                 );
-
-                // Only attach if there is actual data
-                if ($childIntent->resolver && !empty($childResult)) {
-                    $row[$childIntent->fieldName] = $childResult;
-                }
             }
         }
-
 
         return $rows;
     }
 
+    private function applyModifiers(Intent $intent, QueryBuilder $qb, array $arguments): void
+    {
+        foreach ($intent->modifiers as $argName => $directive) {
+            if ($directive instanceof ArgumentBuilderDirectiveInterface) {
+                $value = $this->getNestedValue($arguments, $argName);
+                $directive->handleArgumentBuilder($qb, $value);
+            }
+        }
+    }
+
+    private function resolveField(
+        Intent $intent,
+        QueryBuilder $qb,
+        $parentRow,
+        array $arguments,
+        Context $context,
+        ResolveInfo $info
+    ): array {
+        $resolverCallable = $intent->resolver->resolveField(new TestFieldValue(), $qb);
+
+        return $resolverCallable($parentRow, $arguments, $context, $info);
+    }
 
     private function getIntent(string $parentTypeName, FieldDefinition $field): Intent
     {
@@ -119,6 +123,7 @@ class DoctrineExecution implements ExecutionInterface
                 return $meta->getName();
             }
         }
+
         return null;
     }
 

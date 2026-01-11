@@ -3,10 +3,11 @@
 namespace Netmex\Lumina\Directives\Definition;
 
 use Doctrine\ORM\QueryBuilder;
-use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
+use Netmex\Lumina\Contracts\FieldResolverInterface;
+use Netmex\Lumina\Contracts\FieldValueInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
 
-class BelongsToDirective extends AbstractDirective implements ArgumentBuilderDirectiveInterface
+class BelongsToDirective extends AbstractDirective implements FieldResolverInterface
 {
     public static function name(): string
     {
@@ -17,34 +18,31 @@ class BelongsToDirective extends AbstractDirective implements ArgumentBuilderDir
     {
         return <<<'GRAPHQL'
             directive @belongsTo(
-                target: String,
-            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+                column: String,
+            ) repeatable on FIELD_DEFINITION
         GRAPHQL;
     }
 
-    public function handleArgumentBuilder(QueryBuilder $queryBuilder, $value): QueryBuilder
+    public function resolveField(FieldValueInterface $value, ?QueryBuilder $queryBuilder): callable
     {
-        $relation = $this->getColumn();
+        $shortName = $this->modelClass();
+        $fqcn = $this->resolveEntityFQCN($shortName);
 
-        $rootAlias  = $queryBuilder->getRootAliases()[0];
-        $rootEntity = $queryBuilder->getRootEntities()[0];
-
-        $metadata = $queryBuilder->getEntityManager()->getClassMetadata($rootEntity);
-
-        if (!$metadata->hasAssociation($relation)) {
-            throw new \InvalidArgumentException(sprintf(
-                'Relation "%s" does not exist on %s',
-                $relation,
-                $rootEntity
-            ));
+        if (!$fqcn) {
+            throw new \RuntimeException("Cannot resolve entity FQCN for $shortName");
         }
 
-        $alias = $relation . '_alias';
+        return function ($root, array $arguments, $context, $info) use ($fqcn) {
+            $em = $context->entityManager;
 
-        $queryBuilder->innerJoin("$rootAlias.$relation", $alias)
-            ->addSelect($alias)
-            ->distinct();
+            $column = $this->getColumn() ?? 'id';
+            $alias  = 'b_alias';
 
-        return $queryBuilder;
+            $qb = $em->getRepository($fqcn)->createQueryBuilder('b')
+                ->where("b.$column = :parentId")
+                ->setParameter('parentId', $root[$column]);
+
+            return $qb->getQuery()->getArrayResult();
+        };
     }
 }
