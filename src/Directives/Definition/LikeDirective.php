@@ -18,7 +18,7 @@ final class LikeDirective extends AbstractDirective implements ArgumentBuilderDi
         return <<<'GRAPHQL'
             directive @like(
                 on: String
-            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION
         GRAPHQL;
     }
 

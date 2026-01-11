@@ -27,7 +27,7 @@ class CreateDirective extends AbstractDirective implements FieldResolverInterfac
     public static function definition(): string
     {
         return <<<'GRAPHQL'
-            directive @create repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+            directive @create repeatable on FIELD_DEFINITION
         GRAPHQL;
     }
 

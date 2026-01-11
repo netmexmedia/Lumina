@@ -25,7 +25,7 @@ class BetweenDirective extends AbstractDirective implements ArgumentBuilderDirec
     public static function definition(): string
     {
         return <<<'GRAPHQL'
-            directive @between repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+            directive @between repeatable on ARGUMENT_DEFINITION
         GRAPHQL;
     }
 

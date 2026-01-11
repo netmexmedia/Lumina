@@ -24,7 +24,7 @@ class LimitDirective extends AbstractDirective implements ArgumentBuilderDirecti
         return <<<'GRAPHQL'
             directive @limit(
                 value: Int,
-            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION
         GRAPHQL;
     }
 

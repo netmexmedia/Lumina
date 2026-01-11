@@ -19,7 +19,7 @@ class HasManyDirective extends AbstractDirective implements FieldResolverInterfa
         return <<<'GRAPHQL'
             directive @hasMany(
                 column: String,
-            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+            ) repeatable on FIELD_DEFINITION
         GRAPHQL;
     }
 

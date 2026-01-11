@@ -30,7 +30,7 @@ final class RoleDirective extends AbstractDirective implements ArgumentBuilderDi
         return <<<'GRAPHQL'
             directive @role(
                 name: String!
-            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION| OBJECT
+            ) repeatable on FIELD_DEFINITION | OBJECT
         GRAPHQL;
     }
 

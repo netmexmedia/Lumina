@@ -27,7 +27,7 @@ final class ValidateDirective extends AbstractDirective implements ArgumentBuild
         return <<<'GRAPHQL'
             directive @validate(
                 rules: [String!]!,
-            ) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION
         GRAPHQL;
     }
 

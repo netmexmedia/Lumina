@@ -36,7 +36,7 @@ class CountDirective extends AbstractDirective implements FieldResolverInterface
         return <<<'GRAPHQL'
             directive @count(
                 column: String = id
-            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+            ) repeatable on FIELD_DEFINITION
         GRAPHQL;
     }
 
