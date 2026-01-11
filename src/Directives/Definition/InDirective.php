@@ -29,6 +29,7 @@ class InDirective extends AbstractDirective implements ArgumentBuilderDirectiveI
             return $queryBuilder;
         }
 
+        dd();
         $alias = current($queryBuilder->getRootAliases());
         $columns = $this->getArgument('columns') ?? [$this->getColumn()];
         $exact = $this->getArgument('exact') ?? true;

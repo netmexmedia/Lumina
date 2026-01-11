@@ -13,21 +13,12 @@ use GraphQL\Language\AST\NonNullTypeNode;
 use GraphQL\Type\Definition\ResolveInfo;
 use Netmex\Lumina\Context\Context;
 use Netmex\Lumina\Contracts\FieldArgumentDirectiveInterface;
-use Netmex\Lumina\Contracts\FieldInputDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Contracts\FieldValueInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 final class FindDirective extends AbstractDirective implements FieldResolverInterface, FieldArgumentDirectiveInterface
 {
-    private NormalizerInterface $normalizer;
-
-    public function __construct(NormalizerInterface $normalizer)
-    {
-        $this->normalizer = $normalizer;
-    }
-
     public static function name(): string
     {
         return 'find';
@@ -62,24 +53,15 @@ final class FindDirective extends AbstractDirective implements FieldResolverInte
 
     public function resolveField(FieldValueInterface $value, ?QueryBuilder $queryBuilder): callable
     {
-        $normalizer = $this->normalizer;
-
-        return static function (mixed $root, array $args, Context $context, ResolveInfo $info) use ($queryBuilder, $normalizer)
-        {
+        return static function (mixed $root, array $args, Context $context, ResolveInfo $info) use ($queryBuilder) {
             $alias = current($queryBuilder->getRootAliases());
-
             $id = $args['id'] ?? null;
-            $result = $queryBuilder
+
+            return $queryBuilder
                 ->where("$alias.id = :id")
                 ->setParameter('id', $id)
                 ->getQuery()
                 ->getOneOrNullResult();
-
-            return $normalizer->normalize($result, null, [
-                'circular_reference_handler' => function ($object) {
-                    return $object->getId();
-                },
-            ]);
         };
     }
 }

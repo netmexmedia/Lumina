@@ -2,6 +2,7 @@
 
 namespace Netmex\Lumina\Directives\Definition;
 
+use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\QueryBuilder;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Contracts\FieldValueInterface;
@@ -25,24 +26,22 @@ class BelongsToDirective extends AbstractDirective implements FieldResolverInter
 
     public function resolveField(FieldValueInterface $value, ?QueryBuilder $queryBuilder): callable
     {
-        $shortName = $this->modelClass();
-        $fqcn = $this->resolveEntityFQCN($shortName);
+        return static function ($root, array $arguments, $context, $info) use ($queryBuilder) {
+            if (!$queryBuilder) {
+                throw new \RuntimeException('QueryBuilder not provided to BelongsToDirective');
+            }
 
-        if (!$fqcn) {
-            throw new \RuntimeException("Cannot resolve entity FQCN for $shortName");
-        }
+            $foreignKey = 'id';
 
-        return function ($root, array $arguments, $context, $info) use ($fqcn) {
-            $em = $context->entityManager;
+            if (!isset($root[$foreignKey])) {
+                return null;
+            }
 
-            $column = $this->getColumn() ?? 'id';
-            $alias  = 'b_alias';
+            $queryBuilder
+                ->andWhere('root.id = :parentId')
+                ->setParameter('parentId', $root[$foreignKey]);
 
-            $qb = $em->getRepository($fqcn)->createQueryBuilder('b')
-                ->where("b.$column = :parentId")
-                ->setParameter('parentId', $root[$column]);
-
-            return $qb->getQuery()->getArrayResult();
+            return $queryBuilder->getQuery()->getOneOrNullResult(AbstractQuery::HYDRATE_ARRAY);
         };
     }
 }

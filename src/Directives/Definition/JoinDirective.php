@@ -24,7 +24,7 @@ class JoinDirective extends AbstractDirective implements FieldResolverInterface
 
             directive @join(
                 target: String,
-                type: JoinType
+                type: JoinType = INNER
             ) repeatable on FIELD_DEFINITION
         GRAPHQL;
     }
@@ -32,7 +32,7 @@ class JoinDirective extends AbstractDirective implements FieldResolverInterface
     public function resolveField(FieldValueInterface $value, ?QueryBuilder $queryBuilder): callable
     {
         $shortName = $this->modelClass();
-        $fqcn = $this->resolveEntityFQCN($shortName);
+        $fqcn      = $this->resolveEntityFQCN($shortName);
 
         if (!$fqcn) {
             throw new \RuntimeException("Cannot resolve entity FQCN for $shortName");
@@ -40,16 +40,13 @@ class JoinDirective extends AbstractDirective implements FieldResolverInterface
 
         return function ($root, array $arguments, $context, $info) use ($fqcn) {
             $em = $context->entityManager;
-            $relation = $this->getColumn();
-            $type     = $this->getArgument('type', 'INNER');
 
-            $qb = $em->getRepository($fqcn)->createQueryBuilder('j');
+            $qb = $em->getRepository($fqcn)
+                ->createQueryBuilder('c')
+                ->where('c.test = :parentId')
+                ->setParameter('parentId', $root['id']);
 
-            if ($type === 'LEFT') {
-                $qb->leftJoin("j.$relation", 'r');
-            } else {
-                $qb->innerJoin("j.$relation", 'r');
-            }
+
 
             return $qb->getQuery()->getArrayResult();
         };

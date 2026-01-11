@@ -26,45 +26,36 @@ class DoctrineExecution implements ExecutionInterface
         $this->intentRegistry = $intentRegistry;
     }
 
-    public function executeField(
-        string $parentTypeName,
-        FieldDefinition $field,
-        array $arguments,
-        Context $context,
-        ResolveInfo $info
-    ): array {
+    public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info): mixed {
         $intent = $this->getIntent($parentTypeName, $field);
         $result = $this->executeRecursive($intent, $arguments, $context, $info);
 
         return $result;
     }
 
-    private function executeRecursive(
-        Intent $intent,
-        array $arguments,
-        Context $context,
-        ResolveInfo $info,
-        $parentRow = null,
-        ?string $parentModel = null
-    ): array {
+    private function executeRecursive(Intent $intent, array $arguments, Context $context, ResolveInfo $info, $parentRow = null, ?string $parentModel = null): mixed
+    {
         $model = $intent->resolver?->getModel() ?? $parentModel;
-        if (!$model) return [];
 
-        // 1️⃣ Build QueryBuilder for this intent
+        if (!$model) {
+            return [];
+        }
+
         $qb = $this->createQueryBuilder($model, 'root');
 
-        // 2️⃣ Apply child constraints (hasMany, etc.)
         $this->applyChildConstraints($intent, $qb);
-
-        // 3️⃣ Apply argument modifiers for this intent
         $this->applyModifiers($intent, $qb, $arguments);
 
-        if (!$intent->resolver) return [];
+        if (!$intent->resolver) {
+            return [];
+        }
 
-        // 4️⃣ Fetch rows for this intent
         $rows = $this->resolveField($intent, $qb, $parentRow, $arguments, $context, $info);
 
-        // 5️⃣ Recursively fetch children
+        if (!is_array($rows)) {
+            return $rows;
+        }
+
         foreach ($intent->children as $childIntent) {
             if (!$childIntent->resolver) continue;
 
@@ -93,12 +84,14 @@ class DoctrineExecution implements ExecutionInterface
         foreach ($intent->children as $childIntent) {
             $meta = $childIntent->metaData;
 
-            if (!$childIntent->resolver || !$meta || $meta->getStrategy() !== 'hasMany') {
+            if (!$childIntent->resolver || !$meta || $meta->getStrategy() !== 'hasMany' || $meta) {
                 continue;
             }
 
             $childModel = $meta->getModel();
-            if (!$childModel) continue;
+            if (!$childModel) {
+                continue;
+            }
 
             $childAlias = 'c' . (++$i);
 
@@ -127,7 +120,6 @@ class DoctrineExecution implements ExecutionInterface
 
     private function getAssociationField(Intent $parentIntent, Intent $childIntent): string
     {
-        // This should match the property on the child entity that references the parent
         return strtolower($parentIntent->getMetaData()->getModel());
     }
 
@@ -147,16 +139,30 @@ class DoctrineExecution implements ExecutionInterface
     // =======================
     // Resolve fields
     // =======================
-    private function resolveField(
-        Intent $intent,
-        QueryBuilder $qb,
-        $parentRow,
-        array $arguments,
-        Context $context,
-        ResolveInfo $info
-    ): array {
+    private function resolveField(Intent $intent, QueryBuilder $qb, $parentRow, array $arguments, Context $context, ResolveInfo $info): mixed
+    {
+        // 1️⃣ Get top-level requested fields for this GraphQL field
+        $requestedFields = array_keys($info->getFieldSelection(1));
+
+        // 2️⃣ Filter out fields that are objects (relations)
+        $childSelections = $info->getFieldSelection(2);
+        $scalars = array_filter(
+            $requestedFields,
+            static fn($f) => !is_array($childSelections[$f] ?? null)
+        );
+
+        // 3️⃣ Always include 'id' for Doctrine mapping
+        if (!in_array('id', $scalars, true)) {
+            $scalars[] = 'id';
+        }
+
+        // 4️⃣ Build select clause dynamically
+        $qb->select(array_map(fn($f) => "root.$f", $scalars));
+
+        // 5️⃣ Get the resolver callable
         $resolverCallable = $intent->resolver->resolveField(new TestFieldValue(), $qb);
 
+        // 6️⃣ Execute resolver with parent row, arguments, context, and info
         return $resolverCallable($parentRow, $arguments, $context, $info);
     }
 

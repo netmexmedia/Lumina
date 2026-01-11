@@ -3,7 +3,6 @@
 namespace Netmex\Lumina\Directives\Definition;
 
 use Doctrine\ORM\QueryBuilder;
-use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
 use Netmex\Lumina\Contracts\FieldResolverInterface;
 use Netmex\Lumina\Contracts\FieldValueInterface;
 use Netmex\Lumina\Directives\AbstractDirective;
@@ -33,35 +32,19 @@ class HasManyDirective extends AbstractDirective implements FieldResolverInterfa
             throw new \RuntimeException("Cannot resolve entity FQCN for $shortName");
         }
 
-        return function ($root, array $arguments, $context, $info) use ($fqcn) {
-
-            $manySelection = null;
-            foreach ($info->fieldNodes[0]->selectionSet->selections ?? [] as $selection) {
-                if ($selection->name->value === 'many') {
-                    $manySelection = $selection;
-                    break;
-                }
-            }
-
-            $selectedFields = ['id'];
-            if ($manySelection && $manySelection->selectionSet) {
-                $selectedFields = [];
-                foreach ($manySelection->selectionSet->selections as $child) {
-                    $selectedFields[] = $child->name->value;
-                }
-            }
-
+        return static function ($root, array $arguments, $context, $info) use ($fqcn) {
             $em = $context->entityManager;
-            $qb = $em->getRepository($fqcn)->createQueryBuilder('c')
+
+            $qb = $em->getRepository($fqcn)
+                ->createQueryBuilder('c')
                 ->where('c.test = :parentId')
                 ->setParameter('parentId', $root['id']);
 
-            // Only select requested columns
-            $qb->select(array_map(fn($f) => "c.$f", $selectedFields));
+            if (!empty($arguments['limit'])) {
+                $qb->setMaxResults((int) $arguments['limit']);
+            }
 
-            $children = $qb->getQuery()->getArrayResult();
-
-            return $children;
+            return $qb->getQuery()->getArrayResult();
         };
     }
 }

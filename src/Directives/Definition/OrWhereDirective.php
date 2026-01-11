@@ -30,10 +30,11 @@ final class OrWhereDirective extends AbstractDirective implements ArgumentBuilde
             return $queryBuilder;
         }
 
-        $column = $this->nodeName();
-        $param = ':' . $column."_param";
+        $alias = current($queryBuilder->getRootAliases());
+        $column = $this->getColumn();
+        $param = ':' . $column . '_param';
 
-        $queryBuilder->orWhere("e.$column = $param")
+        $queryBuilder->orWhere("$alias.$column = $param")
             ->setParameter($param, $value);
 
         return $queryBuilder;
