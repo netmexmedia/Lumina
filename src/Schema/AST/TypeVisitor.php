@@ -4,65 +4,44 @@ declare(strict_types=1);
 
 namespace Netmex\Lumina\Schema\AST;
 
-use GraphQL\Language\AST\InputObjectTypeDefinitionNode;
-use GraphQL\Language\AST\InterfaceTypeDefinitionNode;
-use GraphQL\Language\AST\ObjectTypeDefinitionNode;
-use GraphQL\Language\AST\TypeDefinitionNode;
-use GraphQL\Language\AST\FieldDefinitionNode;
-use GraphQL\Language\AST\DocumentNode;
-use Netmex\Lumina\Contracts\IntentFactoryInterface;
+use Netmex\Lumina\Intent\Intent;
 use Netmex\Lumina\Intent\IntentRegistry;
 
 final class TypeVisitor
 {
-    private FieldVisitor $fieldVisitor;
+    private DirectiveVisitor $directiveVisitor;
     private IntentRegistry $intentRegistry;
-    private IntentFactoryInterface $intentFactory;
 
-    public function __construct(FieldVisitor $fieldVisitor, IntentRegistry $intentRegistry, IntentFactoryInterface $intentFactory)
+    public function __construct(DirectiveVisitor $directiveVisitor, IntentRegistry $intentRegistry)
     {
-        $this->fieldVisitor = $fieldVisitor;
+        $this->directiveVisitor = $directiveVisitor;
         $this->intentRegistry = $intentRegistry;
-        $this->intentFactory = $intentFactory;
     }
 
-    public function visitType(TypeDefinitionNode $typeNode, array $inputTypes, DocumentNode $document): void
+    /**
+     * Visit a type (object or interface) and process all fields.
+     */
+    public function visitType($typeNode, array $inputTypes, array $objectTypes, $document): void
     {
-        if (!$typeNode instanceof ObjectTypeDefinitionNode && !$typeNode instanceof InterfaceTypeDefinitionNode && !$typeNode instanceof InputObjectTypeDefinitionNode) {
-            return;
-        }
+        $this->directiveVisitor->setInputTypes($inputTypes);
+        $this->directiveVisitor->setObjectTypes($objectTypes);
 
         $typeName = $typeNode->name->value;
 
-        $objectTypes = $this->collectObjectTypes($document);
-        $this->fieldVisitor->getArgumentVisitor()->setObjectTypes($objectTypes);
-
-        $typeDirectives = $this->fieldVisitor->collectTypeDirectives($typeNode);
-
         foreach ($typeNode->fields as $fieldNode) {
-            if (!$fieldNode instanceof FieldDefinitionNode) {
-                continue;
-            }
+            // Root intent only if the field has a directive
+            if (!empty($fieldNode->directives)) {
+                $intent = new Intent($typeName, $fieldNode->name->value);
+                $this->intentRegistry->add($intent);
 
-            $intent = $this->intentFactory->create($typeName, $fieldNode->name->value, $typeDirectives);
+                // Visit arguments and return type fields recursively
+                if (property_exists($fieldNode, 'arguments') && !empty($fieldNode->arguments)) {
+                    $this->directiveVisitor->visitArguments($intent, $fieldNode->arguments);
+                }
 
-            $this->fieldVisitor->applyTypeDirectivesToIntent($intent, $typeDirectives);
-            $this->fieldVisitor->visitField($intent, $fieldNode, $inputTypes, $document);
-
-            $this->intentRegistry->add($intent);
-        }
-    }
-
-    private function collectObjectTypes(DocumentNode $document): array
-    {
-        $objectTypes = [];
-        foreach ($document->definitions as $def) {
-            if ($def instanceof ObjectTypeDefinitionNode) {
-                $objectTypes[$def->name->value] = $def;
+                $this->directiveVisitor->visitReturnType($intent, [$fieldNode], $document);
             }
         }
-
-        return $objectTypes;
     }
 
     public function getIntentRegistry(): IntentRegistry

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Netmex\Lumina\Schema\AST\New;
+namespace Netmex\Lumina\Schema\AST;
 
 use GraphQL\Language\AST\NodeList;
 use Netmex\Lumina\Contracts\DirectiveInterface;

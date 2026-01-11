@@ -8,25 +8,22 @@ use GraphQL\Executor\ExecutionResult;
 use GraphQL\GraphQL;
 use Netmex\Lumina\Contracts\ContextBuilderInterface;
 use Netmex\Lumina\Http\Request\GraphQLRequest;
-use Netmex\Lumina\Schema\AST\New\SchemaVisitor;
 use Netmex\Lumina\Schema\Execution\ExecutionResolver;
-use Netmex\Lumina\Schema\SchemaCompiler;
+use Netmex\Lumina\Schema\SchemaVisitor;
 use Netmex\Lumina\Schema\Source\SchemaSourceRegistry;
 
 readonly class Kernel
 {
     private SchemaVisitor $schemaVisitor;
     private SchemaSourceRegistry $schemaSourceRegistry;
-    private SchemaCompiler $schemaCompiler;
     private ExecutionResolver $fieldResolverCompiler;
     private ContextBuilderInterface $contextBuilder;
 
-    public function __construct(SchemaVisitor $schemaVisitor,SchemaSourceRegistry $schemaSourceRegistry, SchemaCompiler $schemaCompiler, ExecutionResolver $fieldResolverCompiler, ContextBuilderInterface $contextBuilder) {
+    public function __construct(SchemaVisitor $schemaVisitor, SchemaSourceRegistry $schemaSourceRegistry, ExecutionResolver $fieldResolverCompiler, ContextBuilderInterface $contextBuilder) {
         $this->schemaVisitor = $schemaVisitor;
 
         $this->schemaSourceRegistry = $schemaSourceRegistry;
 
-        $this->schemaCompiler = $schemaCompiler;
         $this->fieldResolverCompiler = $fieldResolverCompiler;
 
         $this->contextBuilder = $contextBuilder;
@@ -36,7 +33,6 @@ readonly class Kernel
     {
         $this->schemaSourceRegistry->buildDocumentFromSdl();
         $this->schemaVisitor->visit();
-//        $this->schemaCompiler->compile();
         $this->fieldResolverCompiler->register();
 
         $result = GraphQL::executeQuery(

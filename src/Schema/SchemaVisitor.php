@@ -1,12 +1,13 @@
 <?php
 
-namespace Netmex\Lumina\Schema\AST\New;
+namespace Netmex\Lumina\Schema;
 
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\InputObjectTypeDefinitionNode;
 use GraphQL\Language\AST\InterfaceTypeDefinitionNode;
 use GraphQL\Language\AST\ObjectTypeDefinitionNode;
 use Netmex\Lumina\Intent\IntentRegistry;
+use Netmex\Lumina\Schema\AST\TypeVisitor;
 use Netmex\Lumina\Schema\Source\SchemaSourceRegistry;
 
 final class SchemaVisitor

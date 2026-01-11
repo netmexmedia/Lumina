@@ -1,76 +1,40 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Netmex\Lumina\Schema\AST;
 
-use GraphQL\Language\AST\DocumentNode;
-use GraphQL\Language\AST\FieldDefinitionNode;
-use Netmex\Lumina\Contracts\DirectiveFactoryInterface;
-use Netmex\Lumina\Directives\Registry\DirectiveRegistry;
 use Netmex\Lumina\Intent\Intent;
-use Symfony\Component\DependencyInjection\ServiceLocator;
 
-final class FieldVisitor extends AbstractASTDirectiveVisitor
+final class FieldVisitor
 {
-    private ArgumentDirectiveVisitor $argumentVisitor;
+    private ArgumentVisitor $argumentVisitor;
+    private ReturnTypeVisitor $returnTypeVisitor;
 
-    public function __construct(DirectiveFactoryInterface $directiveFactory, ArgumentDirectiveVisitor $argumentVisitor)
+    public function __construct(ArgumentVisitor $argumentVisitor, ReturnTypeVisitor $returnTypeVisitor)
     {
-        parent::__construct($directiveFactory);
         $this->argumentVisitor = $argumentVisitor;
+        $this->returnTypeVisitor = $returnTypeVisitor;
     }
 
-    public function visitField(Intent $intent, FieldDefinitionNode $fieldNode, array $inputTypes, DocumentNode $document): void
+    public function visitField(Intent $intent, $fieldNode, array $inputTypes, array $objectTypes): void
     {
-        $existingArgs = $this->collectExistingArgs($fieldNode);
-
-        $this->applyDirectives($intent, $fieldNode, $existingArgs, $document);
-        $this->visitFieldArguments($intent, $fieldNode, $inputTypes);
-        $this->visitReturnTypeFields($intent, $fieldNode);
-    }
-
-    private function collectExistingArgs(FieldDefinitionNode $fieldNode): array
-    {
-        $existingArgs = [];
-        foreach ($fieldNode->arguments as $argNode) {
-            $existingArgs[$argNode->name->value] = true;
+        // Visit arguments (input objects)
+        foreach ($fieldNode->arguments ?? [] as $argNode) {
+            $this->argumentVisitor->visitArgument($intent, $argNode, $fieldNode, $inputTypes, $objectTypes);
         }
 
-        return $existingArgs;
+        // Visit return type (object types)
+        $returnTypeName = $this->getNamedType($fieldNode->type);
+        $this->returnTypeVisitor->visitReturnType($intent, $returnTypeName, $objectTypes);
     }
 
-    private function applyDirectives(Intent $intent, FieldDefinitionNode $fieldNode, array &$existingArgs, DocumentNode $document): void
+    private function getNamedType($typeNode): string
     {
-        $this->applyFieldDirectives($intent, $fieldNode, $existingArgs, $document);
-    }
-
-    private function visitFieldArguments(Intent $intent, FieldDefinitionNode $fieldNode, array $inputTypes): void
-    {
-        foreach ($fieldNode->arguments as $argNode) {
-            $this->argumentVisitor->visitArgument($intent, $argNode, $fieldNode, $inputTypes);
+        if (property_exists($typeNode, 'name') && $typeNode->name) {
+            return $typeNode->name->value;
         }
+        if (property_exists($typeNode, 'type') && $typeNode->type) {
+            return $this->getNamedType($typeNode->type);
+        }
+        throw new \RuntimeException('Cannot resolve named type');
     }
-
-    private function visitReturnTypeFields(Intent $intent, FieldDefinitionNode $fieldNode): void
-    {
-        $returnType = $this->getNamedType($fieldNode->type);
-        $this->argumentVisitor->traverseReturnTypeFields($intent, $returnType);
-    }
-
-    protected function getDirectiveLocator(): ServiceLocator
-    {
-        return $this->argumentVisitor->getDirectiveLocator();
-    }
-
-    protected function getDirectiveRegistry(): DirectiveRegistry
-    {
-        return $this->argumentVisitor->getDirectiveRegistry();
-    }
-
-    public function getArgumentVisitor(): ArgumentDirectiveVisitor
-    {
-        return $this->argumentVisitor;
-    }
-
 }

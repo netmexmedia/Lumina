@@ -1,6 +1,6 @@
 <?php
 
-namespace Netmex\Lumina\Schema\AST\New;
+namespace Netmex\Lumina\Schema\AST;
 
 use Netmex\Lumina\Intent\Intent;
 
