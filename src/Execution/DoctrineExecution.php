@@ -141,22 +141,18 @@ class DoctrineExecution implements ExecutionInterface
     // =======================
     private function resolveField(Intent $intent, QueryBuilder $qb, $parentRow, array $arguments, Context $context, ResolveInfo $info): mixed
     {
-        // 1️⃣ Get top-level requested fields for this GraphQL field
         $requestedFields = array_keys($info->getFieldSelection(1));
 
-        // 2️⃣ Filter out fields that are objects (relations)
         $childSelections = $info->getFieldSelection(2);
         $scalars = array_filter(
             $requestedFields,
             static fn($f) => !is_array($childSelections[$f] ?? null)
         );
 
-        // 3️⃣ Always include 'id' for Doctrine mapping
         if (!in_array('id', $scalars, true)) {
             $scalars[] = 'id';
         }
 
-        // 4️⃣ Build select clause dynamically
         $qb->select(array_map(fn($f) => "root.$f", $scalars));
 
         // 5️⃣ Get the resolver callable
