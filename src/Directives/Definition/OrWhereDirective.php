@@ -20,7 +20,7 @@ final class OrWhereDirective extends AbstractDirective implements ArgumentBuilde
         return <<<'GRAPHQL'
             directive @orWhere(
                 on: String
-            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION
         GRAPHQL;
     }
 

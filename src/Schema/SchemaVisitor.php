@@ -35,7 +35,6 @@ final class SchemaVisitor
         }
 
         $this->schemaSource->setDocument($document);
-
         return $this->typeVisitor->getIntentRegistry();
     }
 

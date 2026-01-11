@@ -20,7 +20,7 @@ final class WhereDirective extends AbstractDirective implements ArgumentBuilderD
         return <<<'GRAPHQL'
             directive @where(
                 on: String
-            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION 
         GRAPHQL;
     }
 
@@ -29,6 +29,7 @@ final class WhereDirective extends AbstractDirective implements ArgumentBuilderD
         if ($value === null) {
             return $queryBuilder;
         }
+        dump($value, $this->nodeName());
 
         $alias = current($queryBuilder->getRootAliases());
         $column = $this->nodeName();

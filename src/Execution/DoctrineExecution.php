@@ -29,7 +29,7 @@ class DoctrineExecution implements ExecutionInterface
     public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info): mixed {
         $intent = $this->getIntent($parentTypeName, $field);
         $result = $this->executeRecursive($intent, $arguments, $context, $info);
-
+dd($intent);
         return $result;
     }
 
@@ -128,12 +128,40 @@ class DoctrineExecution implements ExecutionInterface
     // =======================
     private function applyModifiers(Intent $intent, QueryBuilder $qb, array $arguments): void
     {
-        foreach ($intent->modifiers as $argName => $directive) {
-            if ($directive instanceof ArgumentBuilderDirectiveInterface) {
-                $value = $this->getNestedValue($arguments, $argName);
-                $directive->handleArgumentBuilder($qb, $value);
-            }
+        $modifiers = $this->collectModifiers($intent);
+
+
+        foreach ($modifiers as $modifier => $directive) {
+            if (!$directive instanceof ArgumentBuilderDirectiveInterface) continue;
+
+            $value = $this->getNestedValue($arguments, $modifier);
+            $directive->handleArgumentBuilder($qb, $value);
         }
+
+    }
+
+
+    private function collectModifiers(Intent $intent, array $path = []): array
+    {
+        $modifiers = [];
+
+        $isRoot = $intent->getParent() === null;
+
+        $currentPath = $path;
+        if (!$isRoot) {
+            $currentPath[] = $intent->fieldName;
+        }
+
+        foreach ($intent->modifiers as $directive) {
+            $fullPath = implode('.', $currentPath);
+            $modifiers[$fullPath] = $directive;
+        }
+
+        foreach ($intent->children as $child) {
+            $modifiers += $this->collectModifiers($child, $currentPath);
+        }
+
+        return $modifiers;
     }
 
     // =======================
@@ -155,10 +183,8 @@ class DoctrineExecution implements ExecutionInterface
 
         $qb->select(array_map(fn($f) => "root.$f", $scalars));
 
-        // 5️⃣ Get the resolver callable
         $resolverCallable = $intent->resolver->resolveField(new TestFieldValue(), $qb);
 
-        // 6️⃣ Execute resolver with parent row, arguments, context, and info
         return $resolverCallable($parentRow, $arguments, $context, $info);
     }
 
@@ -198,6 +224,17 @@ class DoctrineExecution implements ExecutionInterface
         }
 
         return null;
+    }
+
+    private function getIntentPath(Intent $intent): array
+    {
+        $path = [];
+        $current = $intent;
+        while ($current) {
+            $path[] = $current->fieldName;
+            $current = $current->getParent();
+        }
+        return array_reverse($path);
     }
 
     private function getNestedValue(array $args, string $path): mixed

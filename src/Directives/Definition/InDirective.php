@@ -19,7 +19,7 @@ class InDirective extends AbstractDirective implements ArgumentBuilderDirectiveI
             directive @in(
                 columns: [String!]!
                 exact: Boolean
-            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+            ) repeatable on ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION
         GRAPHQL;
     }
 
@@ -29,7 +29,6 @@ class InDirective extends AbstractDirective implements ArgumentBuilderDirectiveI
             return $queryBuilder;
         }
 
-        dd();
         $alias = current($queryBuilder->getRootAliases());
         $columns = $this->getArgument('columns') ?? [$this->getColumn()];
         $exact = $this->getArgument('exact') ?? true;
