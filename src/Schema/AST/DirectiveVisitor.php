@@ -76,27 +76,35 @@ final class DirectiveVisitor
     /**
      * Recursively visit return type fields and apply directives, including AST mutations.
      */
-    public function visitReturnType(Intent $parentIntent, array|NodeList $fields, $document = null, $rootFieldNode = null): void
-    {
+    public function visitReturnType(
+        Intent $parentIntent,
+        array|NodeList $fields,
+        $document = null,
+        $rootFieldNode = null,
+        array $typeStack = [] // track types in the current branch
+    ): void {
         foreach ($fields as $fieldNode) {
             $fieldName = $fieldNode->name->value;
             $namedType = $this->getNamedType($fieldNode->type);
 
-            // --- Step 0: Determine child intent
+            // --- Step 0: Skip self-referencing object types ---
+            $isObjectType = isset($this->objectTypes[$namedType]);
+            if ($isObjectType && in_array($namedType, $typeStack, true)) {
+                // Type already in the branch → skip field entirely
+                continue;
+            }
+
+            // --- Step 1: Determine child intent ---
             $isRootField = $parentIntent->fieldName === $fieldName;
             $childIntent = $isRootField
                 ? $parentIntent
                 : ($parentIntent->getChildByName($fieldName) ?? new Intent($parentIntent->typeName, $fieldName));
 
-            // Ensure metaData exists
             if (!$childIntent->metaData) {
                 $childIntent->setMetaData(new IntentMetaData());
             }
 
-            // Add field to its own metaData
             $childIntent->getMetaData()->setFields([$fieldName]);
-
-            // If this is a new child, attach to parent
             if (!$isRootField && !$childIntent->getParent()) {
                 $childIntent->setParent($parentIntent);
                 $parentIntent->addChild($childIntent);
@@ -104,18 +112,17 @@ final class DirectiveVisitor
 
             $rootNodeForInjection = $fieldNode;
 
-            // --- Step 1: Process directives
+            // --- Step 2: Process directives (unchanged) ---
             if (!empty($fieldNode->directives)) {
                 foreach ($fieldNode->directives as $directiveNode) {
                     $directive = $this->instantiateDirective($directiveNode, $fieldNode);
 
                     if ($directive instanceof FieldResolverInterface) {
-                        // Resolver lives on child
                         $childIntent->setResolver($directive);
                         $directive->setModel($namedType);
                         $childIntent->getMetaData()->setStrategy($directive->name());
                         $childIntent->getMetaData()->setModel($directive->modelClass());
-                        // Attach child metaData to parent
+
                         if ($childIntent->getParent()) {
                             $childIntent->getParent()->getMetaData()->addChild($childIntent->getMetaData());
                         }
@@ -124,15 +131,14 @@ final class DirectiveVisitor
                             $directive->modifyFieldType($fieldNode, $document);
                         }
 
-                        // Inject argument/input nodes for resolver
                         if ($directive instanceof FieldArgumentDirectiveInterface && $document) {
                             $this->injectDirectiveArguments($rootNodeForInjection, $directive, $directiveNode->name->value);
                         }
+
                         if ($directive instanceof FieldInputDirectiveInterface && $document) {
                             $this->injectDirectiveArguments($rootNodeForInjection, $directive, $directiveNode->name->value);
                         }
                     } else {
-                        // Modifiers live on child intent
                         $childIntent->addModifier($directiveNode->name->value, $directive);
 
                         if ($document && method_exists($directive, 'modifyFieldType')) {
@@ -142,6 +148,7 @@ final class DirectiveVisitor
                         if ($directive instanceof FieldArgumentDirectiveInterface && $document) {
                             $this->injectDirectiveArguments($rootNodeForInjection, $directive, $directiveNode->name->value);
                         }
+
                         if ($directive instanceof FieldInputDirectiveInterface && $document) {
                             $this->injectDirectiveArguments($rootNodeForInjection, $directive, $directiveNode->name->value);
                         }
@@ -149,17 +156,20 @@ final class DirectiveVisitor
                 }
             }
 
-            // --- Step 2: Recurse into nested object types
-            if (isset($this->objectTypes[$namedType])) {
+            // --- Step 3: Recurse into nested object types safely ---
+            if ($isObjectType) {
+                // Push current type to stack for recursion
+                $newTypeStack = array_merge($typeStack, [$namedType]);
                 $this->visitReturnType(
                     $childIntent,
                     $this->objectTypes[$namedType]->fields,
                     $document,
-                    $rootNodeForInjection
+                    $rootNodeForInjection,
+                    $newTypeStack
                 );
             }
 
-            // --- Step 3: Merge children fields into this intent's metaData
+            // --- Step 4: Merge children fields into this intent's metaData ---
             $columns = $childIntent->getMetaData()->getFields();
             foreach ($childIntent->getChildrenMetaData() as $childMetaArray) {
                 foreach ($childMetaArray as $childMeta) {
@@ -170,6 +180,10 @@ final class DirectiveVisitor
             $childIntent->getMetaData()->setFields($columns);
         }
     }
+
+
+
+
 
     private function getNamedType($typeNode): string
     {

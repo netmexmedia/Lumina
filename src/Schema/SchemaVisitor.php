@@ -26,7 +26,6 @@ final class SchemaVisitor
     public function visit(): IntentRegistry
     {
         $document = $this->schemaSource->getDocument();
-
         $this->indexTypes($document);
 
         foreach ($document->definitions as $typeDef) {
