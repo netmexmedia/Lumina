@@ -52,7 +52,7 @@ final class BetweenDirective extends AbstractDirective implements
         GRAPHQL;
     }
 
-    // 1️⃣ Create global input type
+    // 1️ Create global input type
     public static function inputsDefinition(): string
     {
         return <<<'GRAPHQL'
@@ -63,7 +63,7 @@ final class BetweenDirective extends AbstractDirective implements
         GRAPHQL;
     }
 
-    // 2️⃣ Attach argument nodes to a field
+    // 2️ Attach argument nodes to a field
     public function argumentNodes(): array
     {
         return [
@@ -77,7 +77,7 @@ final class BetweenDirective extends AbstractDirective implements
         ];
     }
 
-    // 3️⃣ Modify the Doctrine query
+    // 3️ Modify the Doctrine query
     public function handleArgumentBuilder(QueryBuilder $queryBuilder, $value): QueryBuilder
     {
         if (!is_array($value) || !isset($value['min'], $value['max'])) {
@@ -96,13 +96,13 @@ final class BetweenDirective extends AbstractDirective implements
         return $queryBuilder;
     }
 
-    // 4️⃣ Modify the field type in the AST (optional)
+    // 4️ Modify the field type in the AST (optional)
     public function modifyFieldType(FieldDefinitionNode $fieldNode, DocumentNode $document): void
     {
         // Example: wrap output in a custom type if needed
     }
 
-    // 5️⃣ Transform runtime output (optional)
+    // 5️ Transform runtime output (optional)
     public function resolveField($value, ?QueryBuilder $queryBuilder): callable
     {
         return static function ($root, array $args, $context, $info) {
