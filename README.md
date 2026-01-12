@@ -1,16 +1,15 @@
 # Netmex Lumina
 
 ## About
-Netmex Lumina is a directive-driven GraphQL framework for Symfony.
+Netmex Lumina is a **directive-driven GraphQL framework for Symfony**.
 
-Instead of writing resolvers, repositories, and query builders by hand, Lumina lets you describe behavior directly in your GraphQL schema using custom directives.
-Those directives are compiled once into Intents, which are then executed efficiently at runtime.
+Instead of writing resolvers, repositories, or query builders by hand, Lumina lets you describe behavior directly in your GraphQL schema using custom directives. Those directives are compiled once into Intents, which are then executed efficiently at runtime.
 
 Lumina focuses on:
-* clean architecture.
-* zero boilerplate resolvers.
-* strong separation between schema, intent, and execution.
-* first-class Symfony & Doctrine integration.
+* Clean architecture
+* Zero boilerplate resolvers
+* Strong separation between schema, intent, and execution
+* First-class Symfony & Doctrine integration
 
 ## Core Concepts
 
@@ -28,6 +27,7 @@ No wiring.
 
 The schema defines everything.
 
+---
 ### 2. Directives = Behavior
 Each directive represents a unit of intent.
 
@@ -37,15 +37,15 @@ Examples:
 * `@orderBy` - Sort records.
 
 Directives are:
-* reusable
-* composable
-* framework-agnostic at the schema level
+* Reusable
+* Composable
+* Framework-agnostic at the schema level
 
 ### 3. Intent Compilation
 At schema compile time:
-* the GraphQL AST is traversed once
-* directives are instantiated
-* intents are built per Type.Field
+1. The GraphQL AST is traversed once
+2. Directives are instantiated
+3. Intents are built per Type.Field
 
 These intents are stored in an IntentRegistry and reused during execution.
 * No runtime AST traversal
@@ -56,7 +56,7 @@ These intents are stored in an IntentRegistry and reused during execution.
 At runtime:
 * Lumina resolves a field
 * Looks up its compiled intent
-* Builds a Doctrine QueryBuilder
+* Builds a Doctrine `QueryBuilder`
 * Applies argument directives
 * Executes the resolver directive
 
@@ -65,95 +65,33 @@ At runtime:
 ```bash
 composer require netmex/lumina
 ```
+---
 
-## Creating a Directive
-##### Field Resolver Directive
-```php
-<?php
+### Using Directives
+Lumina comes with many **built-in directives**, including:
+- Query directives: `@al`l, `@find`, `@where`, `@orderBy`, `@limit`, `@offset`, `@paginate`
+- Relation directives: `@hasMany`, `@belongsTo`, `@join`
+- Mutation directives: `@create`, `@update`, `@delete`, `@validate`
+- Aggregation directives: `@count`, `@sum`, `@avg`
+- Access control directives: `@can`, `@role`, `@owner`
+- Utilities: `@deprecated`
 
-namespace Netmex\Lumina\Directives\Definition;
+For detailed usage and examples, see the [Directive Documentation](docs/directives/README.md).
 
-use Doctrine\ORM\QueryBuilder;
-use GraphQL\Type\Definition\ResolveInfo;
-use Netmex\Lumina\Context\Context;
-use Netmex\Lumina\Contracts\FieldResolverInterface;
-use Netmex\Lumina\Contracts\FieldValueInterface;
-use Netmex\Lumina\Directives\AbstractDirective;
+---
 
-final class AllDirective extends AbstractDirective implements FieldResolverInterface
-{
-    public static function name(): string
-    {
-        return 'all';
-    }
+## Extending Lumina
 
-    public static function definition(): string
-    {
-        return <<<'GRAPHQL'
-        directive @all(
-            model: String
-        ) on FIELD_DEFINITION
-        GRAPHQL;
-    }
+### Creating a Directive
+Lumina allows you to create custom directives that can:
 
-    public function resolveField(
-        FieldValueInterface $value,
-        ?QueryBuilder $queryBuilder
-    ): callable {
-        return static function (
-            mixed $root,
-            array $arguments,
-            Context $context,
-            ResolveInfo $info
-        ) use ($queryBuilder) {
-            return $queryBuilder->getQuery()->getArrayResult();
-        };
-    }
-}
-```
+1. Modify query execution=
+2. Create input types
+3. Attach arguments to fields
+4. Modify the field’s output type
+5. Transform runtime output data
 
-##### Argument Directive
-```php
-<?php
-
-namespace Netmex\Lumina\Directives\Definition;
-
-use Doctrine\ORM\QueryBuilder;
-use Netmex\Lumina\Contracts\ArgumentBuilderDirectiveInterface;
-use Netmex\Lumina\Directives\AbstractDirective;
-
-final class WhereDirective extends AbstractDirective implements ArgumentBuilderDirectiveInterface
-{
-    public static function name(): string
-    {
-        return 'where';
-    }
-
-    public static function definition(): string
-    {
-        return <<<'GRAPHQL'
-        directive @where(
-            on: String
-        ) repeatable on ARGUMENT_DEFINITION
-        GRAPHQL;
-    }
-
-    public function handleArgumentBuilder(
-        QueryBuilder $queryBuilder,
-        $value
-    ): QueryBuilder {
-        $column = $this->nodeName();
-        $param  = ':' . $column;
-
-        $queryBuilder
-            ->andWhere("e.$column = $param")
-            ->setParameter($param, $value);
-
-        return $queryBuilder;
-    }
-}
-```
-
+See the Creating a [Directive Guide](docs/directives/creating-a-directive.md) for a full example.
 ## Why Lumina?
 1. No resolvers
 2. No controller logic
@@ -162,17 +100,15 @@ final class WhereDirective extends AbstractDirective implements ArgumentBuilderD
 5. Explicit intent
 6. Symfony & Doctrine native
 
-Lumina is ideal if you want:
-* schema-first GraphQL
-* strong consistency
-* minimal boilerplate
-* high performance 
+### Lumina is ideal if you want:
+* Schema-first GraphQL
+* Strong consistency
+* Minimal boilerplate
+* High performance
 
 ## Project Status
 #### Actively developed
-The core architecture is stable and functional.
-
-More directives and documentation are planned.
+The core architecture is stable and functional. More directives and documentation are planned.
 
 ## License
 MIT License
