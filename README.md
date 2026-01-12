@@ -1,5 +1,12 @@
 # Netmex Lumina
 
+
+[![Packagist Version](https://img.shields.io/packagist/v/netmex/lumina?color=blue&label=packagist)](https://packagist.org/packages/netmex/lumina)
+[![PHP Version](https://img.shields.io/packagist/php-v/netmex/lumina?color=brightgreen)](https://www.php.net/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+**LuminaBundle** — A Symfony bundle providing Lighthouse-inspired GraphQL support with automatic Doctrine integration, custom resolvers, scalars, directives, queries, and mutations.
+
 ## About
 Netmex Lumina is a **directive-driven GraphQL framework for Symfony**.
 
@@ -69,7 +76,7 @@ composer require netmex/lumina
 
 ### Using Directives
 Lumina comes with many **built-in directives**, including:
-- Query directives: `@al`l, `@find`, `@where`, `@orderBy`, `@limit`, `@offset`, `@paginate`
+- Query directives: `@all`, `@find`, `@where`, `@orderBy`, `@limit`, `@offset`, `@paginate`
 - Relation directives: `@hasMany`, `@belongsTo`, `@join`
 - Mutation directives: `@create`, `@update`, `@delete`, `@validate`
 - Aggregation directives: `@count`, `@sum`, `@avg`
