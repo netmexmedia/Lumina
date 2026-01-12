@@ -92,7 +92,7 @@ For detailed usage and examples, see the [Directive Documentation](docs/directiv
 ### Creating a Directive
 Lumina allows you to create custom directives that can:
 
-1. Modify query execution=
+1. Modify query execution
 2. Create input types
 3. Attach arguments to fields
 4. Modify the field’s output type
