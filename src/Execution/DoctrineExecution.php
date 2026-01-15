@@ -29,7 +29,7 @@ class DoctrineExecution implements ExecutionInterface
     public function executeField(string $parentTypeName, FieldDefinition $field, array $arguments, Context $context, ResolveInfo $info): mixed {
         $intent = $this->getIntent($parentTypeName, $field);
         $result = $this->executeRecursive($intent, $arguments, $context, $info);
-dd($intent);
+
         return $result;
     }
 

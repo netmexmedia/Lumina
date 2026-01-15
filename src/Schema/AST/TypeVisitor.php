@@ -6,6 +6,7 @@ namespace Netmex\Lumina\Schema\AST;
 
 use Netmex\Lumina\Intent\Intent;
 use Netmex\Lumina\Intent\IntentRegistry;
+use Netmex\Lumina\Schema\Directive\DirectiveTypeRegistryVisitor;
 
 final class TypeVisitor
 {
@@ -18,23 +19,18 @@ final class TypeVisitor
         $this->intentRegistry = $intentRegistry;
     }
 
-    /**
-     * Visit a type (object or interface) and process all fields.
-     */
     public function visitType($typeNode, array $inputTypes, array $objectTypes, $document): void
     {
-        $this->directiveVisitor->setInputTypes($inputTypes);
-        $this->directiveVisitor->setObjectTypes($objectTypes);
+        $this->directiveVisitor->types->setInputTypes($inputTypes);
+        $this->directiveVisitor->types->setObjectTypes($objectTypes);
 
         $typeName = $typeNode->name->value;
 
         foreach ($typeNode->fields as $fieldNode) {
-            // Root intent only if the field has a directive
             if (!empty($fieldNode->directives)) {
                 $intent = new Intent($typeName, $fieldNode->name->value);
                 $this->intentRegistry->add($intent);
 
-                // Visit arguments and return type fields recursively
                 if (property_exists($fieldNode, 'arguments') && !empty($fieldNode->arguments)) {
                     $this->directiveVisitor->visitArguments($intent, $fieldNode->arguments);
                 }

@@ -10,3 +10,13 @@ services:
     resource: '../src/*'
 
   Symfony\Component\DependencyInjection\ContainerInterface: '@service_container'
+
+  Netmex\Lumina\Schema\Directive\DirectiveProcessor:
+    arguments:
+      $strategies: !tagged_iterator lumina.directive_strategy
+
+  Netmex\Lumina\Schema\Directive\Strategy\:
+    resource: '../src/Schema/Directive/Strategy/*'
+    tags: ['lumina.directive_strategy']
+
+

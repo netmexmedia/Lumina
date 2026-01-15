@@ -68,11 +68,6 @@ abstract class AbstractDirective implements DirectiveInterface
         return $type->name->value;
     }
 
-    public function setArguments(array $arguments): void
-    {
-        $this->arguments = $arguments;
-    }
-
     public function getArgument(string|int $index, mixed $default = null): mixed
     {
         return $this->arguments[$index] ?? $default;
@@ -82,6 +77,12 @@ abstract class AbstractDirective implements DirectiveInterface
     {
         return $this->arguments;
     }
+
+    public function setArguments(array $arguments): void
+    {
+        $this->arguments = $arguments;
+    }
+
 
     public function getColumn(): string
     {

@@ -23,13 +23,14 @@ final class AllDirective extends AbstractDirective implements FieldResolverInter
         return <<<'GRAPHQL'
             directive @all(
                 model: String,
-                resolver: String
             ) on FIELD_DEFINITION
         GRAPHQL;
     }
 
     public function resolveField(FieldValueInterface $value, ?QueryBuilder $queryBuilder): callable
     {
+        $model = $this->getModel();
+
         return static function (mixed $root, array $arguments, Context $context, ResolveInfo $info) use ($queryBuilder)
         {
             return $queryBuilder->getQuery()->getArrayResult();

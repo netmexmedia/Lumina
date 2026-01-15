@@ -113,7 +113,4 @@ final class Intent
 
         return $this->metaData;
     }
-
-
-
 }
